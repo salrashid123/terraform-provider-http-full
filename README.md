@@ -26,10 +26,22 @@ Requirements
 Usage
 ---------------------
 
+
+
 ```hcl
+terraform {
+  required_providers {
+    http-full = {
+      source  = "registry.terraform.io/salrashid123/http-full"
+      version = "~> 5.0.0"
+    }
+  }
+}
+
 provider "http-full" {
 }
  
+# HTTP POST 
 data "http" "example" {
   provider = http-full
   url = "https://httpbin.org/post"
@@ -45,7 +57,44 @@ data "http" "example" {
 output "data" {
   value = jsondecode(data.http.example.body)
 }
+
+
+# mTLS
+data "http" "example" {
+  provider = http-full
+  url = "https://localhost:8081/get"
+
+  ca = file("${path.module}/../certs/CA_crt.pem")
+  client_crt = file("${path.module}/../certs/client.crt")
+  client_key = file("${path.module}/../certs/client.key")  
+}
 ```
+
+
+You can also use this to interact with an [STS server](https://github.com/salrashid123/sts_server) to get any auth token.
+
+```hcl
+data "http" "sts" {
+  provider = http-full
+  url = "https://stsserver-6w42z6vi3q-uc.a.run.app/token"
+  request_headers = {
+    content-type = "application/json"
+  }
+  request_body = {
+    grant_type = "urn:ietf:params:oauth:grant-type:token-exchange"
+    resource = "grpcserver-6w42z6vi3q-uc.a.run.app"
+    audience = "grpcserver-6w42z6vi3q-uc.a.run.app"
+    requested_token_type = "urn:ietf:params:oauth:token-type:access_token"
+    subject_token = "iamtheeggman"
+    subject_token_type = "urn:ietf:params:oauth:token-type:access_token"
+  }
+}
+
+output "sts_token" {
+  value = jsondecode(data.http.sts.body).access_token
+}
+```
+
 
 For mTLS and other configurations, see [example/index.md](blob/main/docs/index.md)
 
