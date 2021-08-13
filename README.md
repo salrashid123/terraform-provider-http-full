@@ -47,6 +47,8 @@ output "data" {
 }
 ```
 
+For mTLS and other configurations, see [example/index.md](blob/main/docs/index.md)
+
 Building The Provider
 ---------------------
 
