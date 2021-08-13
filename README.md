@@ -106,7 +106,7 @@ Clone repository to: `$GOPATH/src/github.com/salrashid123/terraform-provider-htt
 ```sh
 mkdir -p $GOPATH/src/github.com/terraform-providers
 cd $GOPATH/src/github.com/terraform-providers
-git clone github.com/salrashid123/terraform-provider-http-full
+git clone https://github.com/salrashid123/terraform-provider-http-full.git
 ```
 
 Enter the provider directory and build the provider
@@ -128,6 +128,15 @@ cp $GOBIN/terraform-provider-http-full ~/.terraform.d/plugins/registry.terraform
 ```
 
 Then
+
+```bash
+cd example
+terraform init
+
+terraform apply
+```
+
+with
 
 ```hcl
 terraform {
