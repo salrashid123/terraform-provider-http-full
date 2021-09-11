@@ -26,14 +26,17 @@ Requirements
 Usage
 ---------------------
 
+This provider is published here:
+
+*  [https://registry.terraform.io/providers/salrashid123/http-full/latest](https://registry.terraform.io/providers/salrashid123/http-full/latest)
 
 
 ```hcl
 terraform {
   required_providers {
     http-full = {
-      source  = "registry.terraform.io/salrashid123/http-full"
-      version = "~> 5.0.0"
+      source = "salrashid123/http-full"
+      version = "1.0.0"
     }
   }
 }
