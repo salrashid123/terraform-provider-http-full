@@ -99,6 +99,22 @@ output "sts_token" {
 ```
 
 
+The default mode will be POST with `application/json`. To POST as `application/x-www-form-urlencoded`, embed the form data within a key `body`:
+
+```hcl
+data "http" "example_form" {
+  provider = http-full
+  url = "https://httpbin.org/post"
+  request_headers = {
+    content-type = "application/x-www-form-urlencoded"
+  }
+  request_body = {
+    body = "foo=bar&bar=bar"
+  }
+}
+```
+
+
 For mTLS and other configurations, see [example/index.md](blob/main/docs/index.md)
 
 Building The Provider

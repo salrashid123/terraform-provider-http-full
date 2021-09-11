@@ -1,7 +1,7 @@
 ---
-page_title: "HTTP Data Source"
+page_title: "HTTP-FULL Data Source"
 description: |-
-  Retrieves the content at an HTTP or HTTPS URL.
+  Retrieves the content at an HTTP or HTTPS URL with support for GET, POST and mTLS
 ---
 
 # `http` Data Source
@@ -30,7 +30,7 @@ output "data" {
 ```
 
 
-### POST 
+### POST JSON
 
 ```hcl
 provider "http-full" {
@@ -45,6 +45,30 @@ data "http" "example" {
   request_body = {
     foo = "bar"
     bar = "bar"
+  }
+}
+
+output "data" {
+  value = jsondecode(data.http.example.body)
+}
+```
+
+### POST Form
+
+To POST Form data, use the reserved key `body` within `request_body` as shown below:
+
+```hcl
+provider "http-full" {
+}
+ 
+data "http" "example" {
+  provider = http-full
+  url = "https://httpbin.org/post"
+  request_headers = {
+    content-type = "application/x-www-form-urlencoded"
+  }
+  request_body = {
+    body = "foo=bar&bar=bar"
   }
 }
 
@@ -84,7 +108,7 @@ The following arguments are supported:
 * `request_headers` - (Optional) A map of strings representing additional HTTP
   headers to include in the request.
 
-* `request_body` - (Optional) A map of strings representing the JSON BODY to POST.
+* `request_body` - (Optional) A map of strings representing the BODY to POST.
 
 * `ca` - (Optional) Certificate Authority in PEM format for the target server.
 
@@ -99,7 +123,7 @@ The following attributes are exported:
 * `body` - The raw body of the HTTP response.
 
 * `response_headers` - A map of strings representing the response HTTP headers.
-  Duplicate headers are contatenated with `, ` according to
+  Duplicate headers are concatenated with `, ` according to
   [RFC2616](https://www.w3.org/Protocols/rfc2616/rfc2616-sec4.html#sec4.2)
 
 

@@ -125,18 +125,37 @@ func dataSourceRead(ctx context.Context, d *schema.ResourceData, meta interface{
 	}
 	client := &http.Client{Transport: tr}
 
-	//client := &http.Client{}
-
 	verb := http.MethodGet
 	var body io.Reader
 	b, ok := d.GetOk("request_body")
 	if ok {
 		verb = http.MethodPost
-		jsonData, err := json.Marshal(b)
-		if err != nil {
-			return append(diags, diag.Errorf("Error marshallng JSON request: %s", err)...)
+		if contentType, ok := headers["content-type"]; ok {
+			if strings.Contains(strings.ToLower(contentType.(string)), strings.ToLower("application/x-www-form-urlencoded")) {
+				var hdb map[string]string
+				jsonData, err := json.Marshal(b)
+				if err != nil {
+					return append(diags, diag.Errorf("Error marshallng JSON request: %s", err)...)
+				}
+				err = json.Unmarshal(jsonData, &hdb)
+				if err != nil {
+					return append(diags, diag.Errorf("Error marshallng JSON request: %s", err)...)
+				}
+				body = bytes.NewReader([]byte(hdb["body"]))
+			} else if strings.Contains(strings.ToLower(contentType.(string)), strings.ToLower("application/json")) {
+				jsonData, err := json.Marshal(b)
+				if err != nil {
+					return append(diags, diag.Errorf("Error marshallng JSON request: %s", err)...)
+				}
+				body = bytes.NewReader(jsonData)
+			}
+		} else {
+			jsonData, err := json.Marshal(b)
+			if err != nil {
+				return append(diags, diag.Errorf("Error marshallng JSON request: %s", err)...)
+			}
+			body = bytes.NewReader(jsonData)
 		}
-		body = bytes.NewReader(jsonData)
 	}
 
 	req, err := http.NewRequestWithContext(ctx, verb, url, body)

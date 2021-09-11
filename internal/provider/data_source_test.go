@@ -212,6 +212,9 @@ func TestDataSource_utf16(t *testing.T) {
 const testDataSourceConfig_post = `
 data "http" "http_test" {
   url = "%s/post"
+  request_headers = {
+    content-type = "application/json"
+  }  
   request_body = {
     foo = "bar"
     bar = "bar"
@@ -233,6 +236,57 @@ func TestDataSource_post(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config: fmt.Sprintf(testDataSourceConfig_post, testHttpMock.server.URL),
+				// This should now be a warning, but unsure how to test for it...
+				//ExpectWarning: regexp.MustCompile("Content-Type is not a text type. Got: application/json; charset=UTF-16"),
+
+				Check: func(s *terraform.State) error {
+					_, ok := s.RootModule().Resources["data.http.http_test"]
+					if !ok {
+						return fmt.Errorf("missing data resource")
+					}
+
+					outputs := s.RootModule().Outputs
+
+					if outputs["body"].Value != "1.0.0" {
+						return fmt.Errorf(
+							`'body' output is %s; want '1.0.0'`,
+							outputs["body"].Value,
+						)
+					}
+
+					return nil
+				},
+			},
+		},
+	})
+}
+
+const testDataSourceConfig_form_post = `
+data "http" "http_test" {
+  url = "%s/formpost"
+  request_headers = {
+    content-type = "application/x-www-form-urlencoded"
+  }  
+  request_body = {
+    body = "foo=bar&bar=bar"
+  }  
+}
+
+output "body" {
+  value = "${data.http.http_test.body}"
+}
+`
+
+func TestDataSource_form_post(t *testing.T) {
+	testHttpMock := setUpMockHttpServer()
+
+	defer testHttpMock.server.Close()
+
+	resource.UnitTest(t, resource.TestCase{
+		Providers: testProviders,
+		Steps: []resource.TestStep{
+			{
+				Config: fmt.Sprintf(testDataSourceConfig_form_post, testHttpMock.server.URL),
 				// This should now be a warning, but unsure how to test for it...
 				//ExpectWarning: regexp.MustCompile("Content-Type is not a text type. Got: application/json; charset=UTF-16"),
 
@@ -339,6 +393,19 @@ func setUpMockHttpServer() *TestHttpMock {
 				w.Write([]byte("pem"))
 			} else if r.URL.Path == "/meta_404.txt" {
 				w.WriteHeader(http.StatusNotFound)
+			} else if r.URL.Path == "/formpost" && r.Method == http.MethodPost {
+				defer r.Body.Close()
+				err := r.ParseForm()
+				if err != nil {
+					w.WriteHeader(http.StatusInternalServerError)
+				}
+				if r.FormValue("foo") != "bar" || r.FormValue("bar") != "bar" {
+					w.WriteHeader(http.StatusInternalServerError)
+				}
+
+				w.Header().Set("Content-Type", "text/plain; charset=UTF-8")
+				w.WriteHeader(http.StatusOK)
+				w.Write([]byte("1.0.0"))
 			} else if r.URL.Path == "/post" && r.Method == http.MethodPost {
 				defer r.Body.Close()
 				var data map[string]interface{}
