@@ -94,6 +94,36 @@ func TestDataSource_http404(t *testing.T) {
 	})
 }
 
+const testDataSourceConfig_basic_error_with_body = `
+data "http" "http_test" {
+  url = "%s/errorwithbody"
+}
+
+output "body" {
+  value = data.http.http_test.body
+}
+
+output "response_headers" {
+  value = data.http.http_test.response_headers
+}
+`
+
+func TestDataSource_httperrorwithbody(t *testing.T) {
+	testHttpMock := setUpMockHttpServer()
+
+	defer testHttpMock.server.Close()
+
+	resource.UnitTest(t, resource.TestCase{
+		Providers: testProviders,
+		Steps: []resource.TestStep{
+			{
+				Config:      fmt.Sprintf(testDataSourceConfig_basic_error_with_body, testHttpMock.server.URL),
+				ExpectError: regexp.MustCompile("HTTP request error. Response code: 500,  Error Response body: ruh-roh"),
+			},
+		},
+	})
+}
+
 const testDataSourceConfig_withHeaders = `
 data "http" "http_test" {
   url = "%s/restricted/meta_%d.txt"
@@ -419,6 +449,9 @@ func setUpMockHttpServer() *TestHttpMock {
 				w.Header().Set("Content-Type", "text/plain; charset=UTF-8")
 				w.WriteHeader(http.StatusOK)
 				w.Write([]byte("1.0.0"))
+			} else if r.URL.Path == "/errorwithbody" {
+				w.WriteHeader(http.StatusInternalServerError)
+				w.Write([]byte("ruh-roh"))
 			} else {
 				w.WriteHeader(http.StatusNotFound)
 			}

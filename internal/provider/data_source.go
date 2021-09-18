@@ -175,7 +175,11 @@ func dataSourceRead(ctx context.Context, d *schema.ResourceData, meta interface{
 	defer resp.Body.Close()
 
 	if resp.StatusCode != 200 {
-		return append(diags, diag.Errorf("HTTP request error. Response code: %d", resp.StatusCode)...)
+		bytes, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			return append(diags, diag.Errorf("HTTP request error. Response code: %d", resp.StatusCode)...)
+		}
+		return append(diags, diag.Errorf("HTTP request error. Response code: %d,  Error Response body: %s", resp.StatusCode, string(bytes))...)
 	}
 
 	contentType := resp.Header.Get("Content-Type")
