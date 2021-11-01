@@ -5,7 +5,6 @@ import (
 	"context"
 	"crypto/tls"
 	"crypto/x509"
-	"encoding/json"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -17,6 +16,17 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
+
+func validateVerb(val interface{}, key string) (warns []string, errs []error) {
+	if v, ok := val.(string); ok {
+		if !(v == http.MethodGet || v == http.MethodPost || v == http.MethodHead || v == http.MethodPatch || v == http.MethodDelete) {
+			errs = append(errs, fmt.Errorf("%s must be GET|POST|HEAD|DELETE|PATCH, got: %s", key, v))
+		}
+	} else {
+		errs = append(errs, fmt.Errorf("error parsing method"))
+	}
+	return
+}
 
 func dataSource() *schema.Resource {
 	return &schema.Resource{
@@ -31,6 +41,16 @@ func dataSource() *schema.Resource {
 				},
 			},
 
+			"method": {
+				Type:     schema.TypeString,
+				Optional: true,
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
+				Default:      http.MethodGet,
+				ValidateFunc: validateVerb,
+			},
+
 			"request_headers": {
 				Type:     schema.TypeMap,
 				Optional: true,
@@ -40,7 +60,8 @@ func dataSource() *schema.Resource {
 			},
 
 			"request_body": {
-				Type:     schema.TypeMap,
+				Type:     schema.TypeString,
+				Computed: false,
 				Optional: true,
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
@@ -126,36 +147,24 @@ func dataSourceRead(ctx context.Context, d *schema.ResourceData, meta interface{
 	client := &http.Client{Transport: tr}
 
 	verb := http.MethodGet
+
+	method_override, ok := d.GetOk("method")
+	if ok {
+		if verb, ok = method_override.(string); !ok {
+			return append(diags, diag.Errorf("Error overring verb")...)
+		}
+	}
+
 	var body io.Reader
 	b, ok := d.GetOk("request_body")
 	if ok {
 		verb = http.MethodPost
-		if contentType, ok := headers["content-type"]; ok {
-			if strings.Contains(strings.ToLower(contentType.(string)), strings.ToLower("application/x-www-form-urlencoded")) {
-				var hdb map[string]string
-				jsonData, err := json.Marshal(b)
-				if err != nil {
-					return append(diags, diag.Errorf("Error marshallng JSON request: %s", err)...)
-				}
-				err = json.Unmarshal(jsonData, &hdb)
-				if err != nil {
-					return append(diags, diag.Errorf("Error marshallng JSON request: %s", err)...)
-				}
-				body = bytes.NewReader([]byte(hdb["body"]))
-			} else if strings.Contains(strings.ToLower(contentType.(string)), strings.ToLower("application/json")) {
-				jsonData, err := json.Marshal(b)
-				if err != nil {
-					return append(diags, diag.Errorf("Error marshallng JSON request: %s", err)...)
-				}
-				body = bytes.NewReader(jsonData)
+		if method_override != nil {
+			if verb, ok = method_override.(string); !ok {
+				return append(diags, diag.Errorf("Error overring verb")...)
 			}
-		} else {
-			jsonData, err := json.Marshal(b)
-			if err != nil {
-				return append(diags, diag.Errorf("Error marshallng JSON request: %s", err)...)
-			}
-			body = bytes.NewReader(jsonData)
 		}
+		body = bytes.NewReader([]byte(b.(string)))
 	}
 
 	req, err := http.NewRequestWithContext(ctx, verb, url, body)
@@ -174,7 +183,9 @@ func dataSourceRead(ctx context.Context, d *schema.ResourceData, meta interface{
 
 	defer resp.Body.Close()
 
-	if resp.StatusCode != 200 {
+	// TODO, check if the response code is valid for the verb sent in...
+	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusNoContent &&
+		resp.StatusCode != http.StatusAccepted && resp.StatusCode != http.StatusCreated {
 		bytes, err := ioutil.ReadAll(resp.Body)
 		if err != nil {
 			return append(diags, diag.Errorf("HTTP request error. Response code: %d", resp.StatusCode)...)

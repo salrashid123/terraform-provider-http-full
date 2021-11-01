@@ -10,7 +10,7 @@ thats all.
 - Website: https://www.terraform.io
 - [![Gitter chat](https://badges.gitter.im/hashicorp-terraform/Lobby.png)](https://gitter.im/hashicorp-terraform/Lobby)
 
-<img src="https://cdn.rawgit.com/hashicorp/terraform-website/master/content/source/assets/images/logo-hashicorp.svg" width="600px">
+<img src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/5b/HTTP_logo.svg/220px-HTTP_logo.svg.png" width="200px">
 
 Maintainers
 -----------
@@ -36,25 +36,26 @@ terraform {
   required_providers {
     http-full = {
       source = "salrashid123/http-full"
-      version = "1.0.0"
     }
   }
 }
 
-provider "http-full" {
-}
+provider "http-full" {}
  
 # HTTP POST 
 data "http" "example" {
   provider = http-full
   url = "https://httpbin.org/post"
+
+  method = "POST"
+
   request_headers = {
     content-type = "application/json"
   }
-  request_body = {
-    foo = "bar"
+  request_body = jsonencode({
+    foo = "bar",
     bar = "bar"
-  }
+  })
 }
 
 output "data" {
@@ -66,6 +67,8 @@ output "data" {
 data "http" "example" {
   provider = http-full
   url = "https://localhost:8081/get"
+
+  method = "GET"
 
   ca = file("${path.module}/../certs/CA_crt.pem")
   client_crt = file("${path.module}/../certs/client.crt")
@@ -79,18 +82,21 @@ You can also use this to interact with an [STS server](https://github.com/salras
 ```hcl
 data "http" "sts" {
   provider = http-full
+
   url = "https://stsserver-6w42z6vi3q-uc.a.run.app/token"
+
+  method = "POST"
   request_headers = {
     content-type = "application/json"
   }
-  request_body = {
-    grant_type = "urn:ietf:params:oauth:grant-type:token-exchange"
-    resource = "grpcserver-6w42z6vi3q-uc.a.run.app"
-    audience = "grpcserver-6w42z6vi3q-uc.a.run.app"
-    requested_token_type = "urn:ietf:params:oauth:token-type:access_token"
-    subject_token = "iamtheeggman"
+  request_body = jsonencode({
+    grant_type = "urn:ietf:params:oauth:grant-type:token-exchange",
+    resource = "grpcserver-6w42z6vi3q-uc.a.run.app",
+    audience = "grpcserver-6w42z6vi3q-uc.a.run.app",
+    requested_token_type = "urn:ietf:params:oauth:token-type:access_token",
+    subject_token = "iamtheeggman",
     subject_token_type = "urn:ietf:params:oauth:token-type:access_token"
-  }
+  })
 }
 
 output "sts_token" {
@@ -99,25 +105,26 @@ output "sts_token" {
 ```
 
 
-The default mode will be POST with `application/json`. To POST as `application/x-www-form-urlencoded`, embed the form data within a key `body`:
+The default mode will be POST with `application/json`. To POST as `application/x-www-form-urlencoded`:
 
 ```hcl
 data "http" "example_form" {
   provider = http-full
   url = "https://httpbin.org/post"
+
+  method = "POST"
+
   request_headers = {
     content-type = "application/x-www-form-urlencoded"
   }
-  request_body = {
-    body = "foo=bar&bar=bar"
-  }
+  request_body = "foo=bar&bar=bar"
 }
 ```
 
 
 For mTLS and other configurations, see [example/index.md](blob/main/docs/index.md)
 
-Building The Provider
+Building the DEV Provider
 ---------------------
 
 Clone repository to: `$GOPATH/src/github.com/salrashid123/terraform-provider-http-full
@@ -136,7 +143,7 @@ make fmt
 make build
 ```
 
-Using the provider
+Using the DEV provider
 ----------------------
 
 Copy the provider to your directory
@@ -173,13 +180,15 @@ provider "http-full" {
 data "http" "example" {
   provider = http-full
   url = "https://httpbin.org/post"
+
+  method = "POST"
   request_headers = {
     content-type = "application/json"
   }
-  request_body = {
+  request_body = jsonencode({
     foo = "bar"
     bar = "bar"
-  }
+  })
 }
 
 output "data" {

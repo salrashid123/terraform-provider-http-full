@@ -239,16 +239,51 @@ func TestDataSource_utf16(t *testing.T) {
 	})
 }
 
-const testDataSourceConfig_post = `
+const testDataSourceConfig_verb = `
 data "http" "http_test" {
   url = "%s/post"
+  method = "GET"
   request_headers = {
     content-type = "application/json"
   }  
-  request_body = {
-    foo = "bar"
+  request_body = jsonencode({
+    foo = "bar",
     bar = "bar"
+  })  
+}
+
+output "body" {
+  value = "${data.http.http_test.body}"
+}
+`
+
+func TestDataSource_verb(t *testing.T) {
+	testHttpMock := setUpMockHttpServer()
+
+	defer testHttpMock.server.Close()
+
+	resource.UnitTest(t, resource.TestCase{
+		Providers: testProviders,
+		Steps: []resource.TestStep{
+			{
+				Config:      fmt.Sprintf(testDataSourceConfig_verb, testHttpMock.server.URL),
+				ExpectError: regexp.MustCompile("HTTP request error. Response code: 405"),
+			},
+		},
+	})
+}
+
+const testDataSourceConfig_post = `
+data "http" "http_test" {
+  url = "%s/post"
+  method = "POST"
+  request_headers = {
+    content-type = "application/json"
   }  
+  request_body = jsonencode({
+    foo = "bar",
+    bar = "bar"
+  })  
 }
 
 output "body" {
@@ -294,12 +329,12 @@ func TestDataSource_post(t *testing.T) {
 const testDataSourceConfig_form_post = `
 data "http" "http_test" {
   url = "%s/formpost"
+
+  method = "POST"
   request_headers = {
     content-type = "application/x-www-form-urlencoded"
   }  
-  request_body = {
-    body = "foo=bar&bar=bar"
-  }  
+  request_body = "foo=bar&bar=bar"
 }
 
 output "body" {
@@ -438,17 +473,19 @@ func setUpMockHttpServer() *TestHttpMock {
 				w.Write([]byte("1.0.0"))
 			} else if r.URL.Path == "/post" && r.Method == http.MethodPost {
 				defer r.Body.Close()
-				var data map[string]interface{}
-				err := json.NewDecoder(r.Body).Decode(&data)
+				jsonMap := make(map[string](string))
+				err := json.NewDecoder(r.Body).Decode(&jsonMap)
 				if err != nil {
 					w.WriteHeader(http.StatusInternalServerError)
 				}
-				if data["foo"] != "bar" || data["bar"] != "bar" {
+				if jsonMap["foo"] != "bar" || jsonMap["bar"] != "bar" {
 					w.WriteHeader(http.StatusInternalServerError)
 				}
 				w.Header().Set("Content-Type", "text/plain; charset=UTF-8")
 				w.WriteHeader(http.StatusOK)
 				w.Write([]byte("1.0.0"))
+			} else if r.URL.Path == "/post" && r.Method == http.MethodGet {
+				w.WriteHeader(http.StatusMethodNotAllowed)
 			} else if r.URL.Path == "/errorwithbody" {
 				w.WriteHeader(http.StatusInternalServerError)
 				w.Write([]byte("ruh-roh"))

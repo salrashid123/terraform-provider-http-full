@@ -10,22 +10,25 @@ The `http` data source is a fork of `https://registry.terraform.io/providers/has
 
 with additional support for JSON `POST` and `mTLS`
 
+Note, the `method` parameter defaults to `GET` but specifying it will allow overriding the verb.
+
 ## Example Usage
 
 ### GET
 
 ```hcl
-provider "http-full" {
-}
- 
-data "http" "example" {
+provider "http-full" {}
+
+data "http" "example_get" {
   provider = http-full
-  url = "https://httpbin.org/get"
+  url = "https://localhost:8081/get"
+
+  method = "GET"
+
 }
 
-
-output "data" {
-  value = jsondecode(data.http.example.body)
+output "data_get" {
+  value = data.http.example_get.body
 }
 ```
 
@@ -33,23 +36,24 @@ output "data" {
 ### POST JSON
 
 ```hcl
-provider "http-full" {
-}
- 
-data "http" "example" {
+provider "http-full" {}
+
+data "http" "example_json" {
   provider = http-full
-  url = "https://httpbin.org/post"
+  url = "https://localhost:8081/post"
+
+  method = "POST"
+
   request_headers = {
     content-type = "application/json"
   }
-  request_body = {
-    foo = "bar"
-    bar = "bar"
-  }
+
+  request_body = jsonencode({foo = "bar",bar = "bar"})
+
 }
 
-output "data" {
-  value = jsondecode(data.http.example.body)
+output "data_json" {
+  value = data.http.example_json.body
 }
 ```
 
@@ -58,42 +62,45 @@ output "data" {
 To POST Form data, use the reserved key `body` within `request_body` as shown below:
 
 ```hcl
-provider "http-full" {
-}
+provider "http-full" {}
  
-data "http" "example" {
+data "http" "example_form" {
   provider = http-full
-  url = "https://httpbin.org/post"
+  url = "https://localhost:8081/post"
+
+  method = "POST"
   request_headers = {
     content-type = "application/x-www-form-urlencoded"
   }
-  request_body = {
-    body = "foo=bar&bar=bar"
-  }
-}
 
-output "data" {
-  value = jsondecode(data.http.example.body)
+  request_body = "foo=bar&bar=bar"
+ 
 }
 ```
 
 ### mTLS
 
 ```hcl
-provider "http-full" {
-}
+provider "http-full" {}
 
-data "http" "example" {
+data "http" "example_json_mtls" {
   provider = http-full
-  url = "https://localhost:8081/get"
+  url = "https://localhost:8081/post"
 
-  ca = file("${path.module}/../certs/CA_crt.pem")
-  client_crt = file("${path.module}/../certs/client.crt")
-  client_key = file("${path.module}/../certs/client.key")  
+  method = "POST"
+  request_headers = {
+    content-type = "application/json"
+  }
+
+  request_body = jsonencode({foo = "bar",bar = "bar"})
+
+  ca = file("${path.module}/certs/CA_crt.pem")
+  client_crt = file("${path.module}/certs/client.crt")
+  client_key = file("${path.module}/certs/client.key")  
 }
 
-output "data" {
-  value = data.http.example.body
+output "data_json_mtls" {
+  value = data.http.example_json_mtls.body
 }
 ```
 
@@ -105,10 +112,13 @@ The following arguments are supported:
 * `url` - (Required) The URL to request data from. This URL must respond with
   a `200 OK` response and a `text/*` or `application/json` Content-Type.
 
+* `method` - (Optional) String representing the HTTP verb to use in the call;
+  (default=`GET`; if `request_body` is set, defaults to `POST`).
+
 * `request_headers` - (Optional) A map of strings representing additional HTTP
   headers to include in the request.
 
-* `request_body` - (Optional) A map of strings representing the BODY to POST.
+* `request_body` - (Optional) String representing the BODY to POST.
 
 * `ca` - (Optional) Certificate Authority in PEM format for the target server.
 
