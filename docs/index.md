@@ -34,10 +34,10 @@ data "http" "example" {
   request_headers = {
     content-type = "application/json"
   }
-  request_body = {
-    foo = "bar"
+  request_body = jsonencode({
+    foo = "bar",
     bar = "bar"
-  }
+  })
 }
 
 output "data" {
