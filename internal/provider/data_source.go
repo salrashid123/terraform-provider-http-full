@@ -19,8 +19,17 @@ import (
 
 func validateVerb(val interface{}, key string) (warns []string, errs []error) {
 	if v, ok := val.(string); ok {
-		if !(v == http.MethodGet || v == http.MethodPost || v == http.MethodHead || v == http.MethodPatch || v == http.MethodDelete) {
-			errs = append(errs, fmt.Errorf("%s must be GET|POST|HEAD|DELETE|PATCH, got: %s", key, v))
+		switch v {
+		case
+			http.MethodGet,
+			http.MethodPost,
+			http.MethodHead,
+			http.MethodPatch,
+			http.MethodDelete,
+			http.MethodPut:
+			break
+		default:
+			errs = append(errs, fmt.Errorf("%s must be GET|POST|HEAD|DELETE|PATCH|PUT, got: %s", key, v))
 		}
 	} else {
 		errs = append(errs, fmt.Errorf("error parsing method"))
