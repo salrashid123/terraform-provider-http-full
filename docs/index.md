@@ -18,7 +18,6 @@ terraform {
   required_providers {
     http-full = {
       source = "salrashid123/http-full"
-      version = "1.2.2"
     }
   }
 }
@@ -29,6 +28,7 @@ provider "http-full" { }
 data "http" "example" {
   provider = http-full
   url = "https://httpbin.org/post"
+  method = "POST"
   request_headers = {
     content-type = "application/json"
   }

@@ -61,8 +61,10 @@ data "http" "example" {
 output "data" {
   value = jsondecode(data.http.example.body)
 }
+```
 
 
+```hcl
 # mTLS
 data "http" "example" {
   provider = http-full
