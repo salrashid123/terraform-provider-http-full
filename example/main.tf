@@ -1,9 +1,8 @@
 terraform {
   required_providers {
     http-full = {
-      source  = "registry.terraform.io/salrashid123/http-full"
-      version = "~> 5.0.0"
-      # source  = "salrashid123/http-full"
+      source = "salrashid123/http-full"
+      version = "1.2.2"
     }
   }
 }

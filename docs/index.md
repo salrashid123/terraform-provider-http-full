@@ -8,9 +8,8 @@ description: |-
 
 The HTTP-FULL provider is a utility provider for interacting with generic HTTP
 servers as part of a Terraform configuration.  Its identical to the terraform default 
-[http provider](https://registry.terraform.io/providers/hashicorp/http/latest/docs/data-sources/http) except that this support mTLS and POST.
+[http provider](https://registry.terraform.io/providers/hashicorp/http/latest/docs/data-sources/http) except that this support `mTL`S and `GET|POST|PUT|PATCH`.
 
->> note, this provider only supports POST for JSON data.
 
 ## Example Usage
 
@@ -19,13 +18,12 @@ terraform {
   required_providers {
     http-full = {
       source = "salrashid123/http-full"
-      version = "1.0.0"
+      version = "1.2.2"
     }
   }
 }
 
-provider "http-full" {
-}
+provider "http-full" { }
  
 # HTTP POST 
 data "http" "example" {
