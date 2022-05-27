@@ -28,6 +28,7 @@ func main() {
 		ServerName:   "localhost",
 		Certificates: []tls.Certificate{clientCerts},
 		RootCAs:      caCertPool,
+		InsecureSkipVerify: true,
 	}
 
 	tr := &http.Transport{
