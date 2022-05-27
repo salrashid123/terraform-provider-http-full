@@ -1,12 +1,17 @@
 package provider
 
 import (
+	"crypto/tls"
+	"crypto/x509"
 	"encoding/json"
+	"encoding/pem"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"regexp"
 	"strconv"
+	"strings"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -397,16 +402,8 @@ func TestDataSource_form_post(t *testing.T) {
 	})
 }
 
-// TODO:  i don't know how to do mTLS with https://pkg.go.dev/net/http/httptest#NewTLSServer
-// The following only does TLS even with the client_certs set
-// the caCert and key that is commented signed localhostCert (IP SAN=127.0.0.1, DNS SAN: localhost) and clientCert
-// the caCert that is uncommented works with default go tests here https://go.googlesource.com/go/+/go1.16.2/src/net/http/internal/testcert.go
-
 const (
-	caCert = `-----BEGIN CERTIFICATE-----\nMIICEzCCAXygAwIBAgIQMIMChMLGrR+QvmQvpwAU6zANBgkqhkiG9w0BAQsFADAS\nMRAwDgYDVQQKEwdBY21lIENvMCAXDTcwMDEwMTAwMDAwMFoYDzIwODQwMTI5MTYw\nMDAwWjASMRAwDgYDVQQKEwdBY21lIENvMIGfMA0GCSqGSIb3DQEBAQUAA4GNADCB\niQKBgQDuLnQAI3mDgey3VBzWnB2L39JUU4txjeVE6myuDqkM/uGlfjb9SjY1bIw4\niA5sBBZzHi3z0h1YV8QPuxEbi4nW91IJm2gsvvZhIrCHS3l6afab4pZBl2+XsDul\nrKBxKKtD1rGxlG4LjncdabFn9gvLZad2bSysqz/qTAUStTvqJQIDAQABo2gwZjAO\nBgNVHQ8BAf8EBAMCAqQwEwYDVR0lBAwwCgYIKwYBBQUHAwEwDwYDVR0TAQH/BAUw\nAwEB/zAuBgNVHREEJzAlggtleGFtcGxlLmNvbYcEfwAAAYcQAAAAAAAAAAAAAAAA\nAAAAATANBgkqhkiG9w0BAQsFAAOBgQCEcetwO59EWk7WiJsG4x8SY+UIAA+flUI9\ntyC4lNhbcF2Idq9greZwbYCqTTTr2XiRNSMLCOjKyI7ukPoPjo16ocHj+P3vZGfs\nh1fIw3cSS2OolhloGw/XM6RWPWtPAlGykKLciQrBru5NAPvCMsb/I1DAceTiotQM\nfblo6RBxUQ==\n-----END CERTIFICATE-----`
-
-	//
-	// caCert        = `-----BEGIN CERTIFICATE-----\nMIIDfjCCAmagAwIBAgIBATANBgkqhkiG9w0BAQsFADBQMQswCQYDVQQGEwJVUzEP\nMA0GA1UECgwGR29vZ2xlMRMwEQYDVQQLDApFbnRlcnByaXNlMRswGQYDVQQDDBJF\nbnRlcnByaXNlIFJvb3QgQ0EwHhcNMjIwNTI2MjI1NjI1WhcNMzIwNTI1MjI1NjI1\nWjBQMQswCQYDVQQGEwJVUzEPMA0GA1UECgwGR29vZ2xlMRMwEQYDVQQLDApFbnRl\ncnByaXNlMRswGQYDVQQDDBJFbnRlcnByaXNlIFJvb3QgQ0EwggEiMA0GCSqGSIb3\nDQEBAQUAA4IBDwAwggEKAoIBAQDQ+bpQHaJQWggUoPXVf/7xqLsOPH5D83MDU8l1\ndamAGe7yhZp4leU5hC6KUs8hqA9NQ67WUEOmzS00D01DfsKHsJo9mbufaHN3ij4l\nIDMqJJOgOTvdz3cEfAFhq2syEjqk1ghEwGJhZ2tdh0LORwLUYfoXgYs0w6m6++z2\nkvLZ4G0EgraqsmpjfFXBRDN/OsBdy68jmZBS9LFo/KZu0KH3/ZKAih39SFNOtKNx\n9gXvF7PJ+KOnWEAjuXpQJDNBF7S9WBDEBaIR+qdY5B5oGzzkcGuOlWbqUWfAXMyb\n7WrWODMf8FS8JHVTAN0eLVmnP0Ibqzvtk48oc7NgTg24O5ZzAgMBAAGjYzBhMA4G\nA1UdDwEB/wQEAwIBBjAPBgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBS7tGUlTrMJ\nafcmmZwFqGq5ktD4ZTAfBgNVHSMEGDAWgBS7tGUlTrMJafcmmZwFqGq5ktD4ZTAN\nBgkqhkiG9w0BAQsFAAOCAQEAnE5jWnXIa6hGJKrIUVHhCxdJ4CDpayKiULhjPipR\nTZxzOlbhJHM/eYfH8VtbHRLkZrG/u3uiGWinLliXWHR9cB+BRgdVOMeehDMKP6o0\nWoACUpyLsbiPKdTUEXzXg4MwLwv23vf2xWvp4TousLA8++rIk1qeFW0NSAUGzYfs\nsKpBP2BdJVXcveAEpfwmbnQTZ0OzceA4RFdu4hMZhOwXgK2WZh4fMhyRBh67ueFh\nkVEGN4UUVAP4r/pJEtf4lLE468yPdD+w0yM0xDVAb9DrMyr3h4FwxHalZdgOeRSq\nATCK3GKv5lwmr/NPdg/cPdG5p/lfWQACwi47XgGi59nYIw==\n-----END CERTIFICATE-----`
+	caCert = `-----BEGIN CERTIFICATE-----\nMIIDfjCCAmagAwIBAgIBATANBgkqhkiG9w0BAQsFADBQMQswCQYDVQQGEwJVUzEP\nMA0GA1UECgwGR29vZ2xlMRMwEQYDVQQLDApFbnRlcnByaXNlMRswGQYDVQQDDBJF\nbnRlcnByaXNlIFJvb3QgQ0EwHhcNMjIwNTI2MjI1NjI1WhcNMzIwNTI1MjI1NjI1\nWjBQMQswCQYDVQQGEwJVUzEPMA0GA1UECgwGR29vZ2xlMRMwEQYDVQQLDApFbnRl\ncnByaXNlMRswGQYDVQQDDBJFbnRlcnByaXNlIFJvb3QgQ0EwggEiMA0GCSqGSIb3\nDQEBAQUAA4IBDwAwggEKAoIBAQDQ+bpQHaJQWggUoPXVf/7xqLsOPH5D83MDU8l1\ndamAGe7yhZp4leU5hC6KUs8hqA9NQ67WUEOmzS00D01DfsKHsJo9mbufaHN3ij4l\nIDMqJJOgOTvdz3cEfAFhq2syEjqk1ghEwGJhZ2tdh0LORwLUYfoXgYs0w6m6++z2\nkvLZ4G0EgraqsmpjfFXBRDN/OsBdy68jmZBS9LFo/KZu0KH3/ZKAih39SFNOtKNx\n9gXvF7PJ+KOnWEAjuXpQJDNBF7S9WBDEBaIR+qdY5B5oGzzkcGuOlWbqUWfAXMyb\n7WrWODMf8FS8JHVTAN0eLVmnP0Ibqzvtk48oc7NgTg24O5ZzAgMBAAGjYzBhMA4G\nA1UdDwEB/wQEAwIBBjAPBgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBS7tGUlTrMJ\nafcmmZwFqGq5ktD4ZTAfBgNVHSMEGDAWgBS7tGUlTrMJafcmmZwFqGq5ktD4ZTAN\nBgkqhkiG9w0BAQsFAAOCAQEAnE5jWnXIa6hGJKrIUVHhCxdJ4CDpayKiULhjPipR\nTZxzOlbhJHM/eYfH8VtbHRLkZrG/u3uiGWinLliXWHR9cB+BRgdVOMeehDMKP6o0\nWoACUpyLsbiPKdTUEXzXg4MwLwv23vf2xWvp4TousLA8++rIk1qeFW0NSAUGzYfs\nsKpBP2BdJVXcveAEpfwmbnQTZ0OzceA4RFdu4hMZhOwXgK2WZh4fMhyRBh67ueFh\nkVEGN4UUVAP4r/pJEtf4lLE468yPdD+w0yM0xDVAb9DrMyr3h4FwxHalZdgOeRSq\nATCK3GKv5lwmr/NPdg/cPdG5p/lfWQACwi47XgGi59nYIw==\n-----END CERTIFICATE-----`
 	// 	caKey = `-----BEGIN PRIVATE KEY-----
 	// MIIEvAIBADANBgkqhkiG9w0BAQEFAASCBKYwggSiAgEAAoIBAQDQ+bpQHaJQWggU
 	// oPXVf/7xqLsOPH5D83MDU8l1damAGe7yhZp4leU5hC6KUs8hqA9NQ67WUEOmzS00
@@ -490,7 +487,7 @@ x1mpmqYktTV/Y7QcHQsrVaZ+4WWYO0+Erp1mYrm7EUOhvGOGrp/6mw==
 -----END RSA PRIVATE KEY-----`
 
 	clientCert = `-----BEGIN CERTIFICATE-----\nMIIEDzCCAvegAwIBAgIBAzANBgkqhkiG9w0BAQsFADBQMQswCQYDVQQGEwJVUzEP\nMA0GA1UECgwGR29vZ2xlMRMwEQYDVQQLDApFbnRlcnByaXNlMRswGQYDVQQDDBJF\nbnRlcnByaXNlIFJvb3QgQ0EwHhcNMjIwNTI2MjMxNDE5WhcNMzIwNTI1MjMxNDE5\nWjBNMQswCQYDVQQHDAJVUzEPMA0GA1UECgwGR29vZ2xlMRMwEQYDVQQLDApFbnRl\ncnByaXNlMRgwFgYDVQQDDA91c2VyQGRvbWFpbi5jb20wggEiMA0GCSqGSIb3DQEB\nAQUAA4IBDwAwggEKAoIBAQC87w2DG1FqxHEidfPmhXsnqBNmgp3Rntyo7lJNtL2p\n1N49R88TiOKDNHsxAW4pT8E/cwWKB18SGMgpPEhC6vT7KOVzwUb/ozslfV3JiA4l\n8JU2jYkwXcgUCo1vZGlAcz3ciqfk+pQN1NFy6UuYNN45HNvoFcPgr+3mso+ODGXr\n1rkg/RCfGiMUK8qiyeGq0P7VkavFNsr09Mcx4cxrA7j9TOtTHQg2PReGKihCAlpE\nJHHtmrMRGUun/4i3E9tv53qyv85M9QXXbVN4kZrAH4jCljV8M1StPX+9e0C9A/J1\nvi9dtJ274+NL6dSOOvHv6FH+9bbHaTlmqM8MpyRa6Cl5AgMBAAGjgfYwgfMwDgYD\nVR0PAQH/BAQDAgeAMAkGA1UdEwQCMAAwEwYDVR0lBAwwCgYIKwYBBQUHAwIwHQYD\nVR0OBBYEFDg0Le8zwIgDv537avLRXuIQKTTZMB8GA1UdIwQYMBaAFLu0ZSVOswlp\n9yaZnAWoarmS0PhlMEUGCCsGAQUFBwEBBDkwNzA1BggrBgEFBQcwAoYpaHR0cDov\nL3BraS5lc29kZW1vYXBwMi5jb20vY2Evcm9vdC1jYS5jZXIwOgYDVR0fBDMwMTAv\noC2gK4YpaHR0cDovL3BraS5lc29kZW1vYXBwMi5jb20vY2Evcm9vdC1jYS5jcmww\nDQYJKoZIhvcNAQELBQADggEBADsc0BRMlI2wm4RcAOxK3GKrROAY9Lk/LglGqC63\nbGq0fVq+yu8H9fkQSSFVSaIaXtSYDl+fj7bOUkrJqzRy9hWHDoTTCUF+CNtiP7Lw\nE4jPSp2MllDh5S09/vQgd2k0ahejySSVgBU40klnwQovTWrA7sVG07eBxJph8IXc\nd2iqLbLLh3pnYUwE6VMDmspPVT8LsdNQuHoHsLVIb/zK+OkQM6NX/30Ri/XE41G1\n+h7c49t3eJ4YdYMnuXPS8QDuuRvFsunh00sejZtfvliJcFuCcRLPNw6hrbgIgtB9\nVeoUnh6o5hugfzXc/YqRLYW4zLgEoDnGUv+rf0D8CoYiwDQ=\n-----END CERTIFICATE-----`
-	clientKey  = `-----BEGIN RSA PRIVATE KEY-----\nMIIEpAIBAAKCAQEAvO8NgxtRasRxInXz5oV7J6gTZoKd0Z7cqO5STbS9qdTePUfP\nE4jigzR7MQFuKU/BP3MFigdfEhjIKTxIQur0+yjlc8FG/6M7JX1dyYgOJfCVNo2J\nMF3IFAqNb2RpQHM93Iqn5PqUDdTRculLmDTeORzb6BXD4K/t5rKPjgxl69a5IP0Q\nnxojFCvKosnhqtD+1ZGrxTbK9PTHMeHMawO4/UzrUx0INj0XhiooQgJaRCRx7Zqz\nERlLp/+ItxPbb+d6sr/OTPUF121TeJGawB+IwpY1fDNUrT1/vXtAvQPydb4vXbSd\nu+PjS+nUjjrx7+hR/vW2x2k5ZqjPDKckWugpeQIDAQABAoIBAGRVArT0JelwBrCJ\nOQvbKMqnfB39EThHh+ECJpzzdaEh1R9v6ezyzW9lyGH+43R20SYTvAZP4dHnbSxQ\nwgMfaReT4T32jvCky30eNVcXtIO7XlIJGaigtObHr9JO3YIHcPuUepKj60npEY1X\njPh4Yuarh7CZFltUsh7IBmol9V4mz+ZUd8UCkESpKBwRm8cdkcUPYKzIPbxc4vBB\njOtxDyMheMe61fqV1ZfqR5whU3Hlf8/GtGaKgmxsTIlD1ZcMCHU9mUTGQugoSG4H\n3fmSrGVN3TmqlQPqmim7utwCStUKJ/5tTYDGITpCGojBLdjp5HZsXc5Ujvz1fwcd\nh7nuCgECgYEA7wjaZ3HzJPAwArcBQqp19XusTmtZ1RhRo6Ie8IUWV64TGXH05/aR\nN0qAsSm+H8bGJ4KFZWOM8Icp9dF6goR9cnVPnJex1eJKfK54xi4LXHO+fRtzQVNh\n63yhxA/xyxkzMDLpE/y++9gukaULWHBn3PXhKPNNvUm93jsKUNFCsEECgYEAylfk\nTHCQkwDZgU/nbYdwtQzjX4q2fmLnRb4N5J8/ImM077Kvs2dMQCrzZpXqtn9kPHos\nXLnRdoGyLbU3yjhZoBL3Ul82MxSlfmiWeuxyLdLLX5zp9DBLJkxLuU217edd74Cr\nqLaqbpDbiibZzGYTOPHNAOkXKEbA2f84mzJ0KzkCgYEAofwh5ZA28YVDQ9O4qvDR\nVzYkIlBlZB9C09z9kojeBzUUBF5RVRCmgA2hAG4FRYtypTuyIm9AB4/RQ6BdoS0f\nxfzxonC6NvNO/wdNGSAC2vgk0qtTg6V56hdfmHolpTjCk5sskDrrQcfSZyitc5VZ\nDUgi+ZlHyUq7vGnOJ85nnwECgYEAx0r8JEG2U+PBVvkBY0LEQr6X8FFqX19AlNOV\nUXl7sH3v9KqVHWl/k6/6Hi9Ih0k/y8U1jnrCkSs6+IQFmBoaRGyJxkra0kLioXeX\nxyi9aN62ysx9LbKnQehhqPieWNzKC4w7Bqgrg00Pvql3WTesdSjLlrr9wQC3D7+t\n3EY8XxkCgYBDE3E4qt7lDSbceonSvODPkHud89aM9bc9v2umMpB9VoersGGIi9oK\niJU2ClF3Kwr1J+30HLpptjj8v4V1z1Dean3E9cIj9XDwyiLbCn3Lt/WfJValIJVt\nDDiBQ0k99DWLgwJNJ4vpXYYt8Hw+VZkvEFWPcQJWniy17GbkCKDqSw==\n-----END RSA PRIVATE KEY-----`
+	clientKey  = `-----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQC87w2DG1FqxHEi\ndfPmhXsnqBNmgp3Rntyo7lJNtL2p1N49R88TiOKDNHsxAW4pT8E/cwWKB18SGMgp\nPEhC6vT7KOVzwUb/ozslfV3JiA4l8JU2jYkwXcgUCo1vZGlAcz3ciqfk+pQN1NFy\n6UuYNN45HNvoFcPgr+3mso+ODGXr1rkg/RCfGiMUK8qiyeGq0P7VkavFNsr09Mcx\n4cxrA7j9TOtTHQg2PReGKihCAlpEJHHtmrMRGUun/4i3E9tv53qyv85M9QXXbVN4\nkZrAH4jCljV8M1StPX+9e0C9A/J1vi9dtJ274+NL6dSOOvHv6FH+9bbHaTlmqM8M\npyRa6Cl5AgMBAAECggEAZFUCtPQl6XAGsIk5C9soyqd8Hf0ROEeH4QImnPN1oSHV\nH2/p7PLNb2XIYf7jdHbRJhO8Bk/h0edtLFDCAx9pF5PhPfaO8KTLfR41Vxe0g7te\nUgkZqKC05sev0k7dggdw+5R6kqPrSekRjVeM+Hhi5quHsJkWW1SyHsgGaiX1XibP\n5lR3xQKQRKkoHBGbxx2RxQ9grMg9vFzi8EGM63EPIyF4x7rV+pXVl+pHnCFTceV/\nz8a0ZoqCbGxMiUPVlwwIdT2ZRMZC6ChIbgfd+ZKsZU3dOaqVA+qaKbu63AJK1Qon\n/m1NgMYhOkIaiMEt2OnkdmxdzlSO/PV/Bx2Hue4KAQKBgQDvCNpncfMk8DACtwFC\nqnX1e6xOa1nVGFGjoh7whRZXrhMZcfTn9pE3SoCxKb4fxsYngoVlY4zwhyn10XqC\nhH1ydU+cl7HV4kp8rnjGLgtcc759G3NBU2HrfKHED/HLGTMwMukT/L772C6RpQtY\ncGfc9eEo8029Sb3eOwpQ0UKwQQKBgQDKV+RMcJCTANmBT+dth3C1DONfirZ+YudF\nvg3knz8iYzTvsq+zZ0xAKvNmleq2f2Q8eixcudF2gbIttTfKOFmgEvdSXzYzFKV+\naJZ67HIt0stfnOn0MEsmTEu5TbXt513vgKuotqpukNuKJtnMZhM48c0A6RcoRsDZ\n/zibMnQrOQKBgQCh/CHlkDbxhUND07iq8NFXNiQiUGVkH0LT3P2SiN4HNRQEXlFV\nEKaADaEAbgVFi3KlO7Iib0AHj9FDoF2hLR/F/PGicLo2807/B00ZIALa+CTSq1OD\npXnqF1+YeiWlOMKTmyyQOutBx9JnKK1zlVkNSCL5mUfJSru8ac4nzmefAQKBgQDH\nSvwkQbZT48FW+QFjQsRCvpfwUWpfX0CU05VReXuwfe/0qpUdaX+Tr/oeL0iHST/L\nxTWOesKRKzr4hAWYGhpEbInGStrSQuKhd5fHKL1o3rbKzH0tsqdB6GGo+J5Y3MoL\njDsGqCuDTQ++qXdZN6x1KMuWuv3BALcPv63cRjxfGQKBgEMTcTiq3uUNJtx6idK8\n4M+Qe53z1oz1tz2/a6YykH1Wh6uwYYiL2gqIlTYKUXcrCvUn7fQcumm2OPy/hXXP\nUN5qfcT1wiP1cPDKItsKfcu39Z8lVqUglW0MOIFDST30NYuDAk0ni+ldhi3wfD5V\nmS8QVY9xAlaeLLXsZuQIoOpL\n-----END PRIVATE KEY-----`
 )
 const testDataSourceConfig_tls = `
 data "http" "http_test" {
@@ -506,15 +503,61 @@ output "body" {
 `
 
 func TestDataSource_mtls(t *testing.T) {
-	testHttpMock := setUpMockTLSHttpServer()
+	server := httptest.NewUnstartedServer(
+		http.HandlerFunc(
+			func(w http.ResponseWriter, r *http.Request) {
+				w.Header().Set("Content-Type", "text/plain")
+				if r.URL.Path == "/get" {
+					w.WriteHeader(http.StatusOK)
+					w.Write([]byte("1.0.0"))
+				} else {
+					w.WriteHeader(http.StatusNotFound)
+				}
+			},
+		),
+	)
 
-	defer testHttpMock.server.Close()
+	formatCaCert := strings.Replace(caCert, `\n`, "\n", -1)
+	clientCaCertPool := x509.NewCertPool()
+	ok := clientCaCertPool.AppendCertsFromPEM([]byte(formatCaCert))
+	if !ok {
+		panic(errors.New("Error loading root cert: "))
+	}
+	privBlock, _ := pem.Decode([]byte(localhostKey))
+	key, err := x509.ParsePKCS1PrivateKey(privBlock.Bytes)
+	if err != nil {
+		panic(fmt.Errorf("Error getting server private key : %v", err))
+	}
+
+	pubBlock, _ := pem.Decode([]byte(localhostCert))
+	cert, err := x509.ParseCertificate(pubBlock.Bytes)
+	if err != nil {
+		panic(fmt.Errorf("Error getting server public cert : %v", err))
+	}
+
+	tlsConfig := &tls.Config{
+		ClientAuth: tls.RequireAndVerifyClientCert,
+		ClientCAs:  clientCaCertPool,
+		Certificates: []tls.Certificate{
+			{
+				PrivateKey:  key,
+				Certificate: [][]byte{cert.Raw},
+			},
+		},
+	}
+
+	tlsConfig.BuildNameToCertificate()
+
+	server.TLS = tlsConfig
+	server.StartTLS()
+
+	defer server.Close()
 
 	resource.UnitTest(t, resource.TestCase{
 		Providers: testProviders,
 		Steps: []resource.TestStep{
 			{
-				Config: fmt.Sprintf(testDataSourceConfig_tls, testHttpMock.server.URL, caCert, clientCert, clientKey),
+				Config: fmt.Sprintf(testDataSourceConfig_tls, server.URL, caCert, clientCert, clientKey),
 				Check: func(s *terraform.State) error {
 					_, ok := s.RootModule().Resources["data.http.http_test"]
 					if !ok {
