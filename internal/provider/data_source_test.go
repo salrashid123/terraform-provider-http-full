@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"regexp"
+	"strconv"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -175,6 +176,10 @@ data "http" "http_test" {
   url = "%s/utf-8/meta_%d.txt"
 }
 
+output "status_code" {
+	value = data.http.http_test.status_code
+}
+
 output "body" {
   value = "${data.http.http_test.body}"
 }
@@ -197,6 +202,21 @@ func TestDataSource_utf8(t *testing.T) {
 					}
 
 					outputs := s.RootModule().Outputs
+
+					v, ok := outputs["status_code"].Value.(string)
+					if !ok {
+						return fmt.Errorf("missing status code resource")
+					}
+					status_code, err := strconv.Atoi(v)
+					if err != nil {
+						return fmt.Errorf("error converting status code resource")
+					}
+					if status_code != http.StatusOK {
+						return fmt.Errorf(
+							`'status_code' output is %d; want '200'`,
+							status_code,
+						)
+					}
 
 					if outputs["body"].Value != "1.0.0" {
 						return fmt.Errorf(
@@ -379,15 +399,105 @@ func TestDataSource_form_post(t *testing.T) {
 
 // TODO:  i don't know how to do mTLS with https://pkg.go.dev/net/http/httptest#NewTLSServer
 // The following only does TLS even with the client_certs set
-// net/http/internal/testcert.go from commit https://github.com/golang/go/commit/90860e0c3110ac5898dfe8e0e0fafd0aea8d979a
-// with go1.18
-const localhostCert = `-----BEGIN CERTIFICATE-----\nMIIDOTCCAiGgAwIBAgIQSRJrEpBGFc7tNb1fb5pKFzANBgkqhkiG9w0BAQsFADAS\nMRAwDgYDVQQKEwdBY21lIENvMCAXDTcwMDEwMTAwMDAwMFoYDzIwODQwMTI5MTYw\nMDAwWjASMRAwDgYDVQQKEwdBY21lIENvMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8A\nMIIBCgKCAQEA6Gba5tHV1dAKouAaXO3/ebDUU4rvwCUg/CNaJ2PT5xLD4N1Vcb8r\nbFSW2HXKq+MPfVdwIKR/1DczEoAGf/JWQTW7EgzlXrCd3rlajEX2D73faWJekD0U\naUgz5vtrTXZ90BQL7WvRICd7FlEZ6FPOcPlumiyNmzUqtwGhO+9ad1W5BqJaRI6P\nYfouNkwR6Na4TzSj5BrqUfP0FwDizKSJ0XXmh8g8G9mtwxOSN3Ru1QFc61Xyeluk\nPOGKBV/q6RBNklTNe0gI8usUMlYyoC7ytppNMW7X2vodAelSu25jgx2anj9fDVZu\nh7AXF5+4nJS4AAt0n1lNY7nGSsdZas8PbQIDAQABo4GIMIGFMA4GA1UdDwEB/wQE\nAwICpDATBgNVHSUEDDAKBggrBgEFBQcDATAPBgNVHRMBAf8EBTADAQH/MB0GA1Ud\nDgQWBBStsdjh3/JCXXYlQryOrL4Sh7BW5TAuBgNVHREEJzAlggtleGFtcGxlLmNv\nbYcEfwAAAYcQAAAAAAAAAAAAAAAAAAAAATANBgkqhkiG9w0BAQsFAAOCAQEAxWGI\n5NhpF3nwwy/4yB4i/CwwSpLrWUa70NyhvprUBC50PxiXav1TeDzwzLx/o5HyNwsv\ncxv3HdkLW59i/0SlJSrNnWdfZ19oTcS+6PtLoVyISgtyN6DpkKpdG1cOkW3Cy2P2\n+tK/tKHRP1Y/Ra0RiDpOAmqn0gCOFGz8+lqDIor/T7MTpibL3IxqWfPrvfVRHL3B\ngrw/ZQTTIVjjh4JBSW3WyWgNo/ikC1lrVxzl4iPUGptxT36Cr7Zk2Bsg0XqwbOvK\n5d+NTDREkSnUbie4GeutujmX3Dsx88UiV6UY/4lHJa6I5leHUNOHahRbpbWeOfs/\nWkBKOclmOV2xlTVuPw==\n-----END CERTIFICATE-----`
-const localhostKey = `-----BEGIN RSA TESTING KEY-----\nMIIEvAIBADANBgkqhkiG9w0BAQEFAASCBKYwggSiAgEAAoIBAQDoZtrm0dXV0Aqi\n4Bpc7f95sNRTiu/AJSD8I1onY9PnEsPg3VVxvytsVJbYdcqr4w99V3AgpH/UNzMS\ngAZ/8lZBNbsSDOVesJ3euVqMRfYPvd9pYl6QPRRpSDPm+2tNdn3QFAvta9EgJ3sW\nURnoU85w+W6aLI2bNSq3AaE771p3VbkGolpEjo9h+i42TBHo1rhPNKPkGupR8/QX\nAOLMpInRdeaHyDwb2a3DE5I3dG7VAVzrVfJ6W6Q84YoFX+rpEE2SVM17SAjy6xQy\nVjKgLvK2mk0xbtfa+h0B6VK7bmODHZqeP18NVm6HsBcXn7iclLgAC3SfWU1jucZK\nx1lqzw9tAgMBAAECggEABWzxS1Y2wckblnXY57Z+sl6YdmLV+gxj2r8Qib7g4ZIk\nlIlWR1OJNfw7kU4eryib4fc6nOh6O4AWZyYqAK6tqNQSS/eVG0LQTLTTEldHyVJL\ndvBe+MsUQOj4nTndZW+QvFzbcm2D8lY5n2nBSxU5ypVoKZ1EqQzytFcLZpTN7d89\nEPj0qDyrV4NZlWAwL1AygCwnlwhMQjXEalVF1ylXwU3QzyZ/6MgvF6d3SSUlh+sq\nXefuyigXw484cQQgbzopv6niMOmGP3of+yV4JQqUSb3IDmmT68XjGd2Dkxl4iPki\n6ZwXf3CCi+c+i/zVEcufgZ3SLf8D99kUGE7v7fZ6AQKBgQD1ZX3RAla9hIhxCf+O\n3D+I1j2LMrdjAh0ZKKqwMR4JnHX3mjQI6LwqIctPWTU8wYFECSh9klEclSdCa64s\nuI/GNpcqPXejd0cAAdqHEEeG5sHMDt0oFSurL4lyud0GtZvwlzLuwEweuDtvT9cJ\nWfvl86uyO36IW8JdvUprYDctrQKBgQDycZ697qutBieZlGkHpnYWUAeImVA878sJ\nw44NuXHvMxBPz+lbJGAg8Cn8fcxNAPqHIraK+kx3po8cZGQywKHUWsxi23ozHoxo\n+bGqeQb9U661TnfdDspIXia+xilZt3mm5BPzOUuRqlh4Y9SOBpSWRmEhyw76w4ZP\nOPxjWYAgwQKBgA/FehSYxeJgRjSdo+MWnK66tjHgDJE8bYpUZsP0JC4R9DL5oiaA\nbrd2fI6Y+SbyeNBallObt8LSgzdtnEAbjIH8uDJqyOmknNePRvAvR6mP4xyuR+Bv\nm+Lgp0DMWTw5J9CKpydZDItc49T/mJ5tPhdFVd+am0NAQnmr1MCZ6nHxAoGABS3Y\nLkaC9FdFUUqSU8+Chkd/YbOkuyiENdkvl6t2e52jo5DVc1T7mLiIrRQi4SI8N9bN\n/3oJWCT+uaSLX2ouCtNFunblzWHBrhxnZzTeqVq4SLc8aESAnbslKL4i8/+vYZlN\ns8xtiNcSvL+lMsOBORSXzpj/4Ot8WwTkn1qyGgECgYBKNTypzAHeLE6yVadFp3nQ\nCkq9yzvP/ib05rvgbvrne00YeOxqJ9gtTrzgh7koqJyX1L4NwdkEza4ilDWpucn0\nxiUZS4SoaJq6ZvcBYS62Yr1t8n09iG47YL8ibgtmH3L+svaotvpVxVK+d7BLevA/\nZboOWVe3icTy64BT3OQhmg==\n-----END RSA TESTING KEY-----`
+// the caCert and key that is commented signed localhostCert (IP SAN=127.0.0.1, DNS SAN: localhost) and clientCert
+// the caCert that is uncommented works with default go tests here https://go.googlesource.com/go/+/go1.16.2/src/net/http/internal/testcert.go
 
+const (
+	caCert = `-----BEGIN CERTIFICATE-----\nMIICEzCCAXygAwIBAgIQMIMChMLGrR+QvmQvpwAU6zANBgkqhkiG9w0BAQsFADAS\nMRAwDgYDVQQKEwdBY21lIENvMCAXDTcwMDEwMTAwMDAwMFoYDzIwODQwMTI5MTYw\nMDAwWjASMRAwDgYDVQQKEwdBY21lIENvMIGfMA0GCSqGSIb3DQEBAQUAA4GNADCB\niQKBgQDuLnQAI3mDgey3VBzWnB2L39JUU4txjeVE6myuDqkM/uGlfjb9SjY1bIw4\niA5sBBZzHi3z0h1YV8QPuxEbi4nW91IJm2gsvvZhIrCHS3l6afab4pZBl2+XsDul\nrKBxKKtD1rGxlG4LjncdabFn9gvLZad2bSysqz/qTAUStTvqJQIDAQABo2gwZjAO\nBgNVHQ8BAf8EBAMCAqQwEwYDVR0lBAwwCgYIKwYBBQUHAwEwDwYDVR0TAQH/BAUw\nAwEB/zAuBgNVHREEJzAlggtleGFtcGxlLmNvbYcEfwAAAYcQAAAAAAAAAAAAAAAA\nAAAAATANBgkqhkiG9w0BAQsFAAOBgQCEcetwO59EWk7WiJsG4x8SY+UIAA+flUI9\ntyC4lNhbcF2Idq9greZwbYCqTTTr2XiRNSMLCOjKyI7ukPoPjo16ocHj+P3vZGfs\nh1fIw3cSS2OolhloGw/XM6RWPWtPAlGykKLciQrBru5NAPvCMsb/I1DAceTiotQM\nfblo6RBxUQ==\n-----END CERTIFICATE-----`
+
+	//
+	// caCert        = `-----BEGIN CERTIFICATE-----\nMIIDfjCCAmagAwIBAgIBATANBgkqhkiG9w0BAQsFADBQMQswCQYDVQQGEwJVUzEP\nMA0GA1UECgwGR29vZ2xlMRMwEQYDVQQLDApFbnRlcnByaXNlMRswGQYDVQQDDBJF\nbnRlcnByaXNlIFJvb3QgQ0EwHhcNMjIwNTI2MjI1NjI1WhcNMzIwNTI1MjI1NjI1\nWjBQMQswCQYDVQQGEwJVUzEPMA0GA1UECgwGR29vZ2xlMRMwEQYDVQQLDApFbnRl\ncnByaXNlMRswGQYDVQQDDBJFbnRlcnByaXNlIFJvb3QgQ0EwggEiMA0GCSqGSIb3\nDQEBAQUAA4IBDwAwggEKAoIBAQDQ+bpQHaJQWggUoPXVf/7xqLsOPH5D83MDU8l1\ndamAGe7yhZp4leU5hC6KUs8hqA9NQ67WUEOmzS00D01DfsKHsJo9mbufaHN3ij4l\nIDMqJJOgOTvdz3cEfAFhq2syEjqk1ghEwGJhZ2tdh0LORwLUYfoXgYs0w6m6++z2\nkvLZ4G0EgraqsmpjfFXBRDN/OsBdy68jmZBS9LFo/KZu0KH3/ZKAih39SFNOtKNx\n9gXvF7PJ+KOnWEAjuXpQJDNBF7S9WBDEBaIR+qdY5B5oGzzkcGuOlWbqUWfAXMyb\n7WrWODMf8FS8JHVTAN0eLVmnP0Ibqzvtk48oc7NgTg24O5ZzAgMBAAGjYzBhMA4G\nA1UdDwEB/wQEAwIBBjAPBgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBS7tGUlTrMJ\nafcmmZwFqGq5ktD4ZTAfBgNVHSMEGDAWgBS7tGUlTrMJafcmmZwFqGq5ktD4ZTAN\nBgkqhkiG9w0BAQsFAAOCAQEAnE5jWnXIa6hGJKrIUVHhCxdJ4CDpayKiULhjPipR\nTZxzOlbhJHM/eYfH8VtbHRLkZrG/u3uiGWinLliXWHR9cB+BRgdVOMeehDMKP6o0\nWoACUpyLsbiPKdTUEXzXg4MwLwv23vf2xWvp4TousLA8++rIk1qeFW0NSAUGzYfs\nsKpBP2BdJVXcveAEpfwmbnQTZ0OzceA4RFdu4hMZhOwXgK2WZh4fMhyRBh67ueFh\nkVEGN4UUVAP4r/pJEtf4lLE468yPdD+w0yM0xDVAb9DrMyr3h4FwxHalZdgOeRSq\nATCK3GKv5lwmr/NPdg/cPdG5p/lfWQACwi47XgGi59nYIw==\n-----END CERTIFICATE-----`
+	// 	caKey = `-----BEGIN PRIVATE KEY-----
+	// MIIEvAIBADANBgkqhkiG9w0BAQEFAASCBKYwggSiAgEAAoIBAQDQ+bpQHaJQWggU
+	// oPXVf/7xqLsOPH5D83MDU8l1damAGe7yhZp4leU5hC6KUs8hqA9NQ67WUEOmzS00
+	// D01DfsKHsJo9mbufaHN3ij4lIDMqJJOgOTvdz3cEfAFhq2syEjqk1ghEwGJhZ2td
+	// h0LORwLUYfoXgYs0w6m6++z2kvLZ4G0EgraqsmpjfFXBRDN/OsBdy68jmZBS9LFo
+	// /KZu0KH3/ZKAih39SFNOtKNx9gXvF7PJ+KOnWEAjuXpQJDNBF7S9WBDEBaIR+qdY
+	// 5B5oGzzkcGuOlWbqUWfAXMyb7WrWODMf8FS8JHVTAN0eLVmnP0Ibqzvtk48oc7Ng
+	// Tg24O5ZzAgMBAAECggEAMR5BeIs+l3xR4edjYOdQ2SQ7s0DsvLQAGIwdEgqx6HYv
+	// /7j/cdBprHcxKToFjXefAR4jfiQngpE/Srk+A9tLhfEwj8IOo409dp97s+Y5oHIw
+	// cLyDIcOdyeQLvxU3gPFf71aPYvmFJjfUuIsOXMW8GIde7R95xNEol9aW/+3SPvtf
+	// 3b86gVugWvWbUhGWKWBTW2VQnQVo+MZEy4R3OybFuwxnMasOeLUYQb5RceOEWO3Z
+	// m6UVLPd+vrt5uKtCJIPhU+39Vw8WYiSEysvmIT/p9yaC0Nlydaa5sBQ7CwqRLIqu
+	// Fw+I6SriwoABXCwRoRbOql+HP6+uXJSBm/1j4IGIoQKBgQD/qA11sonVxCanLgXG
+	// GOGFbkvhtJ3IYucTkXh1pI+ZHHcK/frvtL+dpukEOFMNTEmOfJnBA/VVpDDuMmIk
+	// pF+5qSYqnAxXn7oOynYVsTc6QC+F59UjA+wdwag92GHH7brWJjsa9vyg8rDtEAOk
+	// jVZhbf8lBHMjl3B2PVBZqz/k1QKBgQDRQZ3d1/LW2zJ6ZY9CNR1jsKsDCoEZZrnU
+	// lq5beWK5MFBQXeS7v6qptYNgM8VNYsCK2mN1YjqA1JYI0sGtj4XTumWYsaOUNuhE
+	// Rp++LOsi5eySkRNOOAJAHB9VRiT+U+rwUwZkxMKWZbekmhJYJe9DcUZ8oeHD+btG
+	// b2OMESXSJwKBgCEyczz7SAaoB9ThlwJYLMCkx9mxGGPy48qYsymjirn5BkQ5IqKJ
+	// t/ACwnM31SD+7PZBm72ChBLw1SG5DSFw7rUvD7Osu7WNGh3dkGPUtTUtLH6Y0gZP
+	// 9hMPGIefV2McrYwtPrOLqtZDbVH7KF3vtG3GWME3yLOwcHwKDir2n79ZAoGAR1pT
+	// hVDcekz2EmxNBCtuYQ7d0USkrs+rcAUNYR2r/y+tQyoxE6AQhpvhN02P6opQ00gS
+	// f/VFs6ZJnqqW5iK5ZG/7sqxn9eMfIiDe2Y8hgp3aJEQZzCMnCUtNl9s6RArDYr08
+	// weGh5Hy8uQDcXnhY9KtMeLUOca/XHvZegGVceyMCgYBPW0VHLEULeHijCOI1qcmg
+	// 01z6fU3IEBNle80VO5e3+QRjqZnCdOAj0PHqRhpceFkr+QDqlC+9o2eGlicVSE/s
+	// 7Mc467clydBvvkyo7DVtQgivcGdOuVd0kEJVMbC9mcrF4pSfiuhxTqQVmJ+B2QO6
+	// hiAA1onD1iT72j0DOayXbw==
+	// -----END PRIVATE KEY-----`
+	localhostCert = `-----BEGIN CERTIFICATE-----
+MIIELzCCAxegAwIBAgIBAjANBgkqhkiG9w0BAQsFADBQMQswCQYDVQQGEwJVUzEP
+MA0GA1UECgwGR29vZ2xlMRMwEQYDVQQLDApFbnRlcnByaXNlMRswGQYDVQQDDBJF
+bnRlcnByaXNlIFJvb3QgQ0EwHhcNMjIwNTI2MjMwNjIzWhcNMzIwNTI1MjMwNjIz
+WjBPMQswCQYDVQQGEwJVUzEPMA0GA1UECgwGR29vZ2xlMRMwEQYDVQQLDApFbnRl
+cnByaXNlMRowGAYDVQQDDBFzZXJ2ZXIuZG9tYWluLmNvbTCCASIwDQYJKoZIhvcN
+AQEBBQADggEPADCCAQoCggEBALk1Zr85ztqUagPPBJl/m7g+GBcend+JEdmVa9J3
+zP7/MBV+kJymdZ1DWeKdXK3CEOqrH3/vHTsCMyDX6H671LlTnBls6ZdDP10ujCds
+AHbTrFUfD9U4QPtYkL0J0PIHjYGHnHdOkeRQuE8tBx1bRgVJMSsYSFiaZDVI5B3A
+050I41YlEZc6Fq8NIcLig3j2ycqC9eLaDmrKNayRhXBm+N31S26ni3uJUH3sFn7l
+Vt63BGv1o3xbcRv8TRCrLzZb18GbpAG3x5hSbQBn5GJhXDXzeNhdVUE1NPWKtlMs
+sJ6XBiARqrgoHtanae9f1xCbMkMn+wdjhviIuk7S4t0yGcsCAwEAAaOCARMwggEP
+MA4GA1UdDwEB/wQEAwIHgDAJBgNVHRMEAjAAMBMGA1UdJQQMMAoGCCsGAQUFBwMB
+MB0GA1UdDgQWBBRdGJsQ0CJAliuiEka8wJlg+hj5CjAfBgNVHSMEGDAWgBS7tGUl
+TrMJafcmmZwFqGq5ktD4ZTBFBggrBgEFBQcBAQQ5MDcwNQYIKwYBBQUHMAKGKWh0
+dHA6Ly9wa2kuZXNvZGVtb2FwcDIuY29tL2NhL3Jvb3QtY2EuY2VyMDoGA1UdHwQz
+MDEwL6AtoCuGKWh0dHA6Ly9wa2kuZXNvZGVtb2FwcDIuY29tL2NhL3Jvb3QtY2Eu
+Y3JsMBoGA1UdEQQTMBGHBH8AAAGCCWxvY2FsaG9zdDANBgkqhkiG9w0BAQsFAAOC
+AQEAqzmJ1CnygTMKvxkIbQKiYtBLlDAA7tJO+55mcivtk9RxT+PBYEnEV1e+IqHC
+4x+YLESVCHQk1Eia3dJy3fEAylRxzICxMrg+4EA2nuDSgVH8CeD74kUEsEzSw8eY
+SQH2RoOxly+32+lkw2oF1a38+elMvU/0Z2w1F2CW5sVj1kieG4vzn0rqvmNauU04
+r1m6rnN1yq6rtuQ16Y9SQb1VGXs9ijNKMICGcBONqebYCV7nGPCitH5yQsIXy8ns
+DoHHMPWPLdj8n6w9drtKeBN4IHooizAuv43HbWapVgVAKsLxffo1B7DcgQDB0MYn
+Jh1J6CU1KiOziz1rQrambz66Jw==
+-----END CERTIFICATE-----`
+
+	localhostKey = `-----BEGIN RSA PRIVATE KEY-----
+MIIEpAIBAAKCAQEAuTVmvznO2pRqA88EmX+buD4YFx6d34kR2ZVr0nfM/v8wFX6Q
+nKZ1nUNZ4p1crcIQ6qsff+8dOwIzINfofrvUuVOcGWzpl0M/XS6MJ2wAdtOsVR8P
+1ThA+1iQvQnQ8geNgYecd06R5FC4Ty0HHVtGBUkxKxhIWJpkNUjkHcDTnQjjViUR
+lzoWrw0hwuKDePbJyoL14toOaso1rJGFcGb43fVLbqeLe4lQfewWfuVW3rcEa/Wj
+fFtxG/xNEKsvNlvXwZukAbfHmFJtAGfkYmFcNfN42F1VQTU09Yq2UyywnpcGIBGq
+uCge1qdp71/XEJsyQyf7B2OG+Ii6TtLi3TIZywIDAQABAoIBAD05Cd3snhRjOyhH
+Jp4XMMKWxB/gXw+ln+DtI9dPAtTIRnzUeblOzVJPEUd3/Ury++SW7LK9uEvpTj1t
+Ic3DCW651MAS4KS/9hI3cN0XNpARKMZ6niE9lz1+6VmUBR38oSpQScimkFOI22RQ
+3ik2Is9cgoRcYo3ne3ihv8aWF12xIbcP9MjEGh/uTaRZP/PMv3EmDL/5VCN91laB
+9ZtTgeaMjTt53fNrz/PKLFA4qTuXkHlnbxMUp1uW+kHpwH8XY/lhYjjlSjOPQg5y
+QsrObOqOExnfHa7Rds0FT05XsbV5TmRszF2I9fIcnUp0uwIyQ6iTTQzJIufkADQ7
+Jg7HgwECgYEA8a6yG66GvA40JAFp+UK5cl7qKo7YJ2zLPxtRbFW7nZ22jW26u3Fq
+FPhBxSHtn4UfsQTqqpXp04KASS7UyUt6ri2raEzUdSaX/uCMtB9fm+5ixpUJOLO9
+Q9HCkJNFchktCeYlet89MJ/zkl2JSyTGez32JqHSfNRPQ5ds6tIr4QUCgYEAxC48
+Xlx+wjDRpW3SG6QgwPImPjYQCK8hcltEfhltX9veFUJCWYZqEGtD10phS1dQF9WO
+FhTpLFgWCaNlrywD6jsDMS+xv8+VfsooIAlThuKpTZWMLQasDwfYc2n7qcHJOwYs
+pnX4sQNvN4iMvrL0CADDiSVmH99SU0NdVtauSI8CgYEAjf7vBFaZMNpDhjgSdHHg
+lTLw8Ao3M4q3K5+4Sidg8O0duaCTyteK1UE7G0Cg5U2I3i+eVJV56VxOVTEfshkX
+vkh04fXqCd6gBQ8XfCjGus3n2PbtkRQBilwurVTpw2zJSnye3r9Uq0H/EKrGJJE5
+0GUKP45qJg9zdqn8Q0cyoqUCgYA8Yi7arIWnp/cfgCoHsAEU4nO6+lD9G0qkNEtk
+tNbhhn9Y88gQXjsPSrTa8133HqzcaTMOwOj0aTh/RvfpbxbVZcyZuyBu9aoCGJ85
+HSXEgsexxbIbuc4D4lpRS/HWUntp24Cqy+z8Lx5wbWtE1zgdrn6BHC3O6aIhVr7I
+F9QVKQKBgQDBAbYkyc41baRJm6oKIfDUfjNiYdggsKm3OmL4qs+snqKUHv0WF/aI
+U2gGbAvI7b/PKnMs4zct0JoFkZ2MN369PEhcpKnQ6iM8Le+42r8OPhpOs/M0uCeP
+x1mpmqYktTV/Y7QcHQsrVaZ+4WWYO0+Erp1mYrm7EUOhvGOGrp/6mw==
+-----END RSA PRIVATE KEY-----`
+
+	clientCert = `-----BEGIN CERTIFICATE-----\nMIIEDzCCAvegAwIBAgIBAzANBgkqhkiG9w0BAQsFADBQMQswCQYDVQQGEwJVUzEP\nMA0GA1UECgwGR29vZ2xlMRMwEQYDVQQLDApFbnRlcnByaXNlMRswGQYDVQQDDBJF\nbnRlcnByaXNlIFJvb3QgQ0EwHhcNMjIwNTI2MjMxNDE5WhcNMzIwNTI1MjMxNDE5\nWjBNMQswCQYDVQQHDAJVUzEPMA0GA1UECgwGR29vZ2xlMRMwEQYDVQQLDApFbnRl\ncnByaXNlMRgwFgYDVQQDDA91c2VyQGRvbWFpbi5jb20wggEiMA0GCSqGSIb3DQEB\nAQUAA4IBDwAwggEKAoIBAQC87w2DG1FqxHEidfPmhXsnqBNmgp3Rntyo7lJNtL2p\n1N49R88TiOKDNHsxAW4pT8E/cwWKB18SGMgpPEhC6vT7KOVzwUb/ozslfV3JiA4l\n8JU2jYkwXcgUCo1vZGlAcz3ciqfk+pQN1NFy6UuYNN45HNvoFcPgr+3mso+ODGXr\n1rkg/RCfGiMUK8qiyeGq0P7VkavFNsr09Mcx4cxrA7j9TOtTHQg2PReGKihCAlpE\nJHHtmrMRGUun/4i3E9tv53qyv85M9QXXbVN4kZrAH4jCljV8M1StPX+9e0C9A/J1\nvi9dtJ274+NL6dSOOvHv6FH+9bbHaTlmqM8MpyRa6Cl5AgMBAAGjgfYwgfMwDgYD\nVR0PAQH/BAQDAgeAMAkGA1UdEwQCMAAwEwYDVR0lBAwwCgYIKwYBBQUHAwIwHQYD\nVR0OBBYEFDg0Le8zwIgDv537avLRXuIQKTTZMB8GA1UdIwQYMBaAFLu0ZSVOswlp\n9yaZnAWoarmS0PhlMEUGCCsGAQUFBwEBBDkwNzA1BggrBgEFBQcwAoYpaHR0cDov\nL3BraS5lc29kZW1vYXBwMi5jb20vY2Evcm9vdC1jYS5jZXIwOgYDVR0fBDMwMTAv\noC2gK4YpaHR0cDovL3BraS5lc29kZW1vYXBwMi5jb20vY2Evcm9vdC1jYS5jcmww\nDQYJKoZIhvcNAQELBQADggEBADsc0BRMlI2wm4RcAOxK3GKrROAY9Lk/LglGqC63\nbGq0fVq+yu8H9fkQSSFVSaIaXtSYDl+fj7bOUkrJqzRy9hWHDoTTCUF+CNtiP7Lw\nE4jPSp2MllDh5S09/vQgd2k0ahejySSVgBU40klnwQovTWrA7sVG07eBxJph8IXc\nd2iqLbLLh3pnYUwE6VMDmspPVT8LsdNQuHoHsLVIb/zK+OkQM6NX/30Ri/XE41G1\n+h7c49t3eJ4YdYMnuXPS8QDuuRvFsunh00sejZtfvliJcFuCcRLPNw6hrbgIgtB9\nVeoUnh6o5hugfzXc/YqRLYW4zLgEoDnGUv+rf0D8CoYiwDQ=\n-----END CERTIFICATE-----`
+	clientKey  = `-----BEGIN RSA PRIVATE KEY-----\nMIIEpAIBAAKCAQEAvO8NgxtRasRxInXz5oV7J6gTZoKd0Z7cqO5STbS9qdTePUfP\nE4jigzR7MQFuKU/BP3MFigdfEhjIKTxIQur0+yjlc8FG/6M7JX1dyYgOJfCVNo2J\nMF3IFAqNb2RpQHM93Iqn5PqUDdTRculLmDTeORzb6BXD4K/t5rKPjgxl69a5IP0Q\nnxojFCvKosnhqtD+1ZGrxTbK9PTHMeHMawO4/UzrUx0INj0XhiooQgJaRCRx7Zqz\nERlLp/+ItxPbb+d6sr/OTPUF121TeJGawB+IwpY1fDNUrT1/vXtAvQPydb4vXbSd\nu+PjS+nUjjrx7+hR/vW2x2k5ZqjPDKckWugpeQIDAQABAoIBAGRVArT0JelwBrCJ\nOQvbKMqnfB39EThHh+ECJpzzdaEh1R9v6ezyzW9lyGH+43R20SYTvAZP4dHnbSxQ\nwgMfaReT4T32jvCky30eNVcXtIO7XlIJGaigtObHr9JO3YIHcPuUepKj60npEY1X\njPh4Yuarh7CZFltUsh7IBmol9V4mz+ZUd8UCkESpKBwRm8cdkcUPYKzIPbxc4vBB\njOtxDyMheMe61fqV1ZfqR5whU3Hlf8/GtGaKgmxsTIlD1ZcMCHU9mUTGQugoSG4H\n3fmSrGVN3TmqlQPqmim7utwCStUKJ/5tTYDGITpCGojBLdjp5HZsXc5Ujvz1fwcd\nh7nuCgECgYEA7wjaZ3HzJPAwArcBQqp19XusTmtZ1RhRo6Ie8IUWV64TGXH05/aR\nN0qAsSm+H8bGJ4KFZWOM8Icp9dF6goR9cnVPnJex1eJKfK54xi4LXHO+fRtzQVNh\n63yhxA/xyxkzMDLpE/y++9gukaULWHBn3PXhKPNNvUm93jsKUNFCsEECgYEAylfk\nTHCQkwDZgU/nbYdwtQzjX4q2fmLnRb4N5J8/ImM077Kvs2dMQCrzZpXqtn9kPHos\nXLnRdoGyLbU3yjhZoBL3Ul82MxSlfmiWeuxyLdLLX5zp9DBLJkxLuU217edd74Cr\nqLaqbpDbiibZzGYTOPHNAOkXKEbA2f84mzJ0KzkCgYEAofwh5ZA28YVDQ9O4qvDR\nVzYkIlBlZB9C09z9kojeBzUUBF5RVRCmgA2hAG4FRYtypTuyIm9AB4/RQ6BdoS0f\nxfzxonC6NvNO/wdNGSAC2vgk0qtTg6V56hdfmHolpTjCk5sskDrrQcfSZyitc5VZ\nDUgi+ZlHyUq7vGnOJ85nnwECgYEAx0r8JEG2U+PBVvkBY0LEQr6X8FFqX19AlNOV\nUXl7sH3v9KqVHWl/k6/6Hi9Ih0k/y8U1jnrCkSs6+IQFmBoaRGyJxkra0kLioXeX\nxyi9aN62ysx9LbKnQehhqPieWNzKC4w7Bqgrg00Pvql3WTesdSjLlrr9wQC3D7+t\n3EY8XxkCgYBDE3E4qt7lDSbceonSvODPkHud89aM9bc9v2umMpB9VoersGGIi9oK\niJU2ClF3Kwr1J+30HLpptjj8v4V1z1Dean3E9cIj9XDwyiLbCn3Lt/WfJValIJVt\nDDiBQ0k99DWLgwJNJ4vpXYYt8Hw+VZkvEFWPcQJWniy17GbkCKDqSw==\n-----END RSA PRIVATE KEY-----`
+)
 const testDataSourceConfig_tls = `
 data "http" "http_test" {
   url = "%s/get"
   ca = "%s"
+  client_crt = "%s"
+  client_key = "%s" 
 }
 
 output "body" {
@@ -404,7 +514,7 @@ func TestDataSource_mtls(t *testing.T) {
 		Providers: testProviders,
 		Steps: []resource.TestStep{
 			{
-				Config: fmt.Sprintf(testDataSourceConfig_tls, testHttpMock.server.URL, localhostCert),
+				Config: fmt.Sprintf(testDataSourceConfig_tls, testHttpMock.server.URL, caCert, clientCert, clientKey),
 				Check: func(s *terraform.State) error {
 					_, ok := s.RootModule().Resources["data.http.http_test"]
 					if !ok {

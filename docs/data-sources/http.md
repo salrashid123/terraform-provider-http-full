@@ -8,7 +8,7 @@ description: |-
 
 The `http` data source is a fork of `https://registry.terraform.io/providers/hashicorp/http/latest/docs/data-sources/http`
 
-with additional support for JSON `POST` and `mTLS`
+with additional support for JSON `POST|PUT|PATCH|DELETE` and `mTLS`
 
 Note, the `method` parameter defaults to `GET` but specifying it will allow overriding the verb.
 
@@ -25,6 +25,10 @@ data "http" "example_get" {
 
   method = "GET"
 
+}
+
+output "data_status_code" {
+  value = data.http.example_get.status_code
 }
 
 output "data_get" {
@@ -129,6 +133,8 @@ The following arguments are supported:
 ## Attributes Reference
 
 The following attributes are exported:
+
+* `status_code` - The status_code of the HTTP response if not error
 
 * `body` - The raw body of the HTTP response.
 

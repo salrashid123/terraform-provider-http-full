@@ -92,6 +92,13 @@ func dataSource() *schema.Resource {
 					Type: schema.TypeString,
 				},
 			},
+			"status_code": {
+				Type:     schema.TypeInt,
+				Computed: true,
+				Elem: &schema.Schema{
+					Type: schema.TypeInt,
+				},
+			},
 			"ca": {
 				Type:     schema.TypeString,
 				Required: false,
@@ -193,8 +200,9 @@ func dataSourceRead(ctx context.Context, d *schema.ResourceData, meta interface{
 	defer resp.Body.Close()
 
 	// TODO, check if the response code is valid for the verb sent in...
-	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusNoContent &&
-		resp.StatusCode != http.StatusAccepted && resp.StatusCode != http.StatusCreated {
+
+	if !(resp.StatusCode >= 200 && resp.StatusCode < 300) {
+
 		bytes, err := ioutil.ReadAll(resp.Body)
 		if err != nil {
 			return append(diags, diag.Errorf("HTTP request error. Response code: %d", resp.StatusCode)...)
@@ -223,9 +231,16 @@ func dataSourceRead(ctx context.Context, d *schema.ResourceData, meta interface{
 		responseHeaders[k] = strings.Join(v, ", ")
 	}
 
-	d.Set("body", string(bytes))
+	if err = d.Set("status_code", resp.StatusCode); err != nil {
+		return append(diags, diag.Errorf("Error setting HTTP status_code: %s", err)...)
+	}
+
 	if err = d.Set("response_headers", responseHeaders); err != nil {
 		return append(diags, diag.Errorf("Error setting HTTP response headers: %s", err)...)
+	}
+
+	if err = d.Set("body", string(bytes)); err != nil {
+		return append(diags, diag.Errorf("Error setting HTTP response body: %s", err)...)
 	}
 
 	// set ID as something more stable than time
