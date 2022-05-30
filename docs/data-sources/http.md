@@ -119,6 +119,10 @@ The following arguments are supported:
 * `method` - (Optional) String representing the HTTP verb to use in the call;
   (default=`GET`; if `request_body` is set, defaults to `POST`).
 
+* `insecure_skip_verify` - (Optional) Skip server TLS verification (default=`false`).
+
+* `request_timeout_ms` - (Optional) Timeout the request in ms
+
 * `request_headers` - (Optional) A map of strings representing additional HTTP
   headers to include in the request.
 

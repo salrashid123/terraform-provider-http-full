@@ -2,7 +2,7 @@
 Terraform Provider for HTTP mTLS and POST Dataources
 =======================================
 
-This provider is a copy/fork of Terraforms [http Provider](https://registry.terraform.io/providers/hashicorp/http/latest/docs/data-sources/http) except that this support HTTP JSON POST and mTLS.
+This provider is a copy/fork of Terraforms [http Provider](https://registry.terraform.io/providers/hashicorp/http/latest/docs/data-sources/http) except that this support HTTP `GET|POST|PUT|DELETE|PATCH` and `mTLS`.
 
 thats all.
 
@@ -20,8 +20,8 @@ This provider plugin is maintained by the sal, just sal for now.
 Requirements
 ------------
 
-- [Terraform](https://www.terraform.io/downloads.html) 0.14.x
-- [Go](https://golang.org/doc/install) 1.15 (to build the provider plugin)
+- [Terraform](https://www.terraform.io/downloads.html) 0.14.x+
+- [Go](https://golang.org/doc/install) 1.17 (to build the provider plugin)
 
 Usage
 ---------------------

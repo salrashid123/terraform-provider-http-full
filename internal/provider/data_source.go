@@ -12,6 +12,7 @@ import (
 	"net/http"
 	"regexp"
 	"strings"
+	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -85,6 +86,21 @@ func dataSource() *schema.Resource {
 				},
 			},
 
+			"insecure_skip_verify": {
+				Type:     schema.TypeBool,
+				Optional: true,
+				Elem: &schema.Schema{
+					Type: schema.TypeBool,
+				},
+				Default: false,
+			},
+			"request_timeout_ms": {
+				Type:     schema.TypeInt,
+				Optional: true,
+				Elem: &schema.Schema{
+					Type: schema.TypeBool,
+				},
+			},
 			"response_headers": {
 				Type:     schema.TypeMap,
 				Computed: true,
@@ -132,7 +148,17 @@ func dataSourceRead(ctx context.Context, d *schema.ResourceData, meta interface{
 	url := d.Get("url").(string)
 	headers := d.Get("request_headers").(map[string]interface{})
 
-	tlsConfig := &tls.Config{}
+	var skip_verify bool
+	skip_verify_override, ok := d.GetOk("insecure_skip_verify")
+	if ok {
+		if skip_verify, ok = skip_verify_override.(bool); !ok {
+			return append(diags, diag.Errorf("Error overriding skip_verify_override")...)
+		}
+	}
+
+	tlsConfig := &tls.Config{
+		InsecureSkipVerify: skip_verify,
+	}
 
 	castr, ok := d.GetOk("ca")
 	if ok {
@@ -190,6 +216,15 @@ func dataSourceRead(ctx context.Context, d *schema.ResourceData, meta interface{
 
 	for name, value := range headers {
 		req.Header.Set(name, value.(string))
+	}
+
+	timeout_override, ok := d.GetOk("request_timeout_ms")
+	if ok {
+		var timeout int
+		if timeout, ok = timeout_override.(int); !ok {
+			return append(diags, diag.Errorf("Error overriding request_timeout_ms")...)
+		}
+		client.Timeout = time.Duration(timeout) * time.Millisecond
 	}
 
 	resp, err := client.Do(req)

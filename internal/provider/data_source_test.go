@@ -13,6 +13,7 @@ import (
 	"strconv"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
@@ -79,6 +80,29 @@ func TestDataSource_http200(t *testing.T) {
 
 					return nil
 				},
+			},
+		},
+	})
+}
+
+const testDataSourceConfig_timeout = `
+data "http" "http_test" {
+  url = "%s/timeout"
+  request_timeout_ms = 100
+}
+`
+
+func TestDataSource_http_timeout(t *testing.T) {
+	testHttpMock := setUpMockHttpServer()
+
+	defer testHttpMock.server.Close()
+
+	resource.UnitTest(t, resource.TestCase{
+		Providers: testProviders,
+		Steps: []resource.TestStep{
+			{
+				Config:      fmt.Sprintf(testDataSourceConfig_timeout, testHttpMock.server.URL),
+				ExpectError: regexp.MustCompile("context deadline exceeded"),
 			},
 		},
 	})
@@ -403,6 +427,14 @@ func TestDataSource_form_post(t *testing.T) {
 }
 
 const (
+
+	// X509v3 extensions:
+	// X509v3 Key Usage: critical
+	// 	Certificate Sign, CRL Sign
+	// X509v3 Basic Constraints: critical
+	// 	CA:TRUE, pathlen:0
+	// X509v3 Subject Key Identifier:
+	// 	B7:BA:B0:02:A1:E7:BE:34:C6:C1:05:5C:66:78:E5:BB:53:5D:A1:54
 	caCert = `-----BEGIN CERTIFICATE-----\nMIIDfjCCAmagAwIBAgIBATANBgkqhkiG9w0BAQsFADBQMQswCQYDVQQGEwJVUzEP\nMA0GA1UECgwGR29vZ2xlMRMwEQYDVQQLDApFbnRlcnByaXNlMRswGQYDVQQDDBJF\nbnRlcnByaXNlIFJvb3QgQ0EwHhcNMjIwNTI2MjI1NjI1WhcNMzIwNTI1MjI1NjI1\nWjBQMQswCQYDVQQGEwJVUzEPMA0GA1UECgwGR29vZ2xlMRMwEQYDVQQLDApFbnRl\ncnByaXNlMRswGQYDVQQDDBJFbnRlcnByaXNlIFJvb3QgQ0EwggEiMA0GCSqGSIb3\nDQEBAQUAA4IBDwAwggEKAoIBAQDQ+bpQHaJQWggUoPXVf/7xqLsOPH5D83MDU8l1\ndamAGe7yhZp4leU5hC6KUs8hqA9NQ67WUEOmzS00D01DfsKHsJo9mbufaHN3ij4l\nIDMqJJOgOTvdz3cEfAFhq2syEjqk1ghEwGJhZ2tdh0LORwLUYfoXgYs0w6m6++z2\nkvLZ4G0EgraqsmpjfFXBRDN/OsBdy68jmZBS9LFo/KZu0KH3/ZKAih39SFNOtKNx\n9gXvF7PJ+KOnWEAjuXpQJDNBF7S9WBDEBaIR+qdY5B5oGzzkcGuOlWbqUWfAXMyb\n7WrWODMf8FS8JHVTAN0eLVmnP0Ibqzvtk48oc7NgTg24O5ZzAgMBAAGjYzBhMA4G\nA1UdDwEB/wQEAwIBBjAPBgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBS7tGUlTrMJ\nafcmmZwFqGq5ktD4ZTAfBgNVHSMEGDAWgBS7tGUlTrMJafcmmZwFqGq5ktD4ZTAN\nBgkqhkiG9w0BAQsFAAOCAQEAnE5jWnXIa6hGJKrIUVHhCxdJ4CDpayKiULhjPipR\nTZxzOlbhJHM/eYfH8VtbHRLkZrG/u3uiGWinLliXWHR9cB+BRgdVOMeehDMKP6o0\nWoACUpyLsbiPKdTUEXzXg4MwLwv23vf2xWvp4TousLA8++rIk1qeFW0NSAUGzYfs\nsKpBP2BdJVXcveAEpfwmbnQTZ0OzceA4RFdu4hMZhOwXgK2WZh4fMhyRBh67ueFh\nkVEGN4UUVAP4r/pJEtf4lLE468yPdD+w0yM0xDVAb9DrMyr3h4FwxHalZdgOeRSq\nATCK3GKv5lwmr/NPdg/cPdG5p/lfWQACwi47XgGi59nYIw==\n-----END CERTIFICATE-----`
 	// 	caKey = `-----BEGIN PRIVATE KEY-----
 	// MIIEvAIBADANBgkqhkiG9w0BAQEFAASCBKYwggSiAgEAAoIBAQDQ+bpQHaJQWggU
@@ -432,6 +464,14 @@ const (
 	// 7Mc467clydBvvkyo7DVtQgivcGdOuVd0kEJVMbC9mcrF4pSfiuhxTqQVmJ+B2QO6
 	// hiAA1onD1iT72j0DOayXbw==
 	// -----END PRIVATE KEY-----`
+
+	// X509v3 extensions:
+	// X509v3 Extended Key Usage:
+	// 	TLS Web Server Authentication
+	// X509v3 Authority Key Identifier:
+	// 	keyid:B7:BA:B0:02:A1:E7:BE:34:C6:C1:05:5C:66:78:E5:BB:53:5D:A1:54
+	// X509v3 Subject Alternative Name:
+	// 	DNS:localhost
 	localhostCert = `-----BEGIN CERTIFICATE-----
 MIIELzCCAxegAwIBAgIBAjANBgkqhkiG9w0BAQsFADBQMQswCQYDVQQGEwJVUzEP
 MA0GA1UECgwGR29vZ2xlMRMwEQYDVQQLDApFbnRlcnByaXNlMRswGQYDVQQDDBJF
@@ -486,6 +526,11 @@ U2gGbAvI7b/PKnMs4zct0JoFkZ2MN369PEhcpKnQ6iM8Le+42r8OPhpOs/M0uCeP
 x1mpmqYktTV/Y7QcHQsrVaZ+4WWYO0+Erp1mYrm7EUOhvGOGrp/6mw==
 -----END RSA PRIVATE KEY-----`
 
+	// X509v3 extensions:
+	// X509v3 Extended Key Usage:
+	// 	TLS Web Client Authentication
+	// X509v3 Authority Key Identifier:
+	// 	keyid:B7:BA:B0:02:A1:E7:BE:34:C6:C1:05:5C:66:78:E5:BB:53:5D:A1:54
 	clientCert = `-----BEGIN CERTIFICATE-----\nMIIEDzCCAvegAwIBAgIBAzANBgkqhkiG9w0BAQsFADBQMQswCQYDVQQGEwJVUzEP\nMA0GA1UECgwGR29vZ2xlMRMwEQYDVQQLDApFbnRlcnByaXNlMRswGQYDVQQDDBJF\nbnRlcnByaXNlIFJvb3QgQ0EwHhcNMjIwNTI2MjMxNDE5WhcNMzIwNTI1MjMxNDE5\nWjBNMQswCQYDVQQHDAJVUzEPMA0GA1UECgwGR29vZ2xlMRMwEQYDVQQLDApFbnRl\ncnByaXNlMRgwFgYDVQQDDA91c2VyQGRvbWFpbi5jb20wggEiMA0GCSqGSIb3DQEB\nAQUAA4IBDwAwggEKAoIBAQC87w2DG1FqxHEidfPmhXsnqBNmgp3Rntyo7lJNtL2p\n1N49R88TiOKDNHsxAW4pT8E/cwWKB18SGMgpPEhC6vT7KOVzwUb/ozslfV3JiA4l\n8JU2jYkwXcgUCo1vZGlAcz3ciqfk+pQN1NFy6UuYNN45HNvoFcPgr+3mso+ODGXr\n1rkg/RCfGiMUK8qiyeGq0P7VkavFNsr09Mcx4cxrA7j9TOtTHQg2PReGKihCAlpE\nJHHtmrMRGUun/4i3E9tv53qyv85M9QXXbVN4kZrAH4jCljV8M1StPX+9e0C9A/J1\nvi9dtJ274+NL6dSOOvHv6FH+9bbHaTlmqM8MpyRa6Cl5AgMBAAGjgfYwgfMwDgYD\nVR0PAQH/BAQDAgeAMAkGA1UdEwQCMAAwEwYDVR0lBAwwCgYIKwYBBQUHAwIwHQYD\nVR0OBBYEFDg0Le8zwIgDv537avLRXuIQKTTZMB8GA1UdIwQYMBaAFLu0ZSVOswlp\n9yaZnAWoarmS0PhlMEUGCCsGAQUFBwEBBDkwNzA1BggrBgEFBQcwAoYpaHR0cDov\nL3BraS5lc29kZW1vYXBwMi5jb20vY2Evcm9vdC1jYS5jZXIwOgYDVR0fBDMwMTAv\noC2gK4YpaHR0cDovL3BraS5lc29kZW1vYXBwMi5jb20vY2Evcm9vdC1jYS5jcmww\nDQYJKoZIhvcNAQELBQADggEBADsc0BRMlI2wm4RcAOxK3GKrROAY9Lk/LglGqC63\nbGq0fVq+yu8H9fkQSSFVSaIaXtSYDl+fj7bOUkrJqzRy9hWHDoTTCUF+CNtiP7Lw\nE4jPSp2MllDh5S09/vQgd2k0ahejySSVgBU40klnwQovTWrA7sVG07eBxJph8IXc\nd2iqLbLLh3pnYUwE6VMDmspPVT8LsdNQuHoHsLVIb/zK+OkQM6NX/30Ri/XE41G1\n+h7c49t3eJ4YdYMnuXPS8QDuuRvFsunh00sejZtfvliJcFuCcRLPNw6hrbgIgtB9\nVeoUnh6o5hugfzXc/YqRLYW4zLgEoDnGUv+rf0D8CoYiwDQ=\n-----END CERTIFICATE-----`
 	clientKey  = `-----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQC87w2DG1FqxHEi\ndfPmhXsnqBNmgp3Rntyo7lJNtL2p1N49R88TiOKDNHsxAW4pT8E/cwWKB18SGMgp\nPEhC6vT7KOVzwUb/ozslfV3JiA4l8JU2jYkwXcgUCo1vZGlAcz3ciqfk+pQN1NFy\n6UuYNN45HNvoFcPgr+3mso+ODGXr1rkg/RCfGiMUK8qiyeGq0P7VkavFNsr09Mcx\n4cxrA7j9TOtTHQg2PReGKihCAlpEJHHtmrMRGUun/4i3E9tv53qyv85M9QXXbVN4\nkZrAH4jCljV8M1StPX+9e0C9A/J1vi9dtJ274+NL6dSOOvHv6FH+9bbHaTlmqM8M\npyRa6Cl5AgMBAAECggEAZFUCtPQl6XAGsIk5C9soyqd8Hf0ROEeH4QImnPN1oSHV\nH2/p7PLNb2XIYf7jdHbRJhO8Bk/h0edtLFDCAx9pF5PhPfaO8KTLfR41Vxe0g7te\nUgkZqKC05sev0k7dggdw+5R6kqPrSekRjVeM+Hhi5quHsJkWW1SyHsgGaiX1XibP\n5lR3xQKQRKkoHBGbxx2RxQ9grMg9vFzi8EGM63EPIyF4x7rV+pXVl+pHnCFTceV/\nz8a0ZoqCbGxMiUPVlwwIdT2ZRMZC6ChIbgfd+ZKsZU3dOaqVA+qaKbu63AJK1Qon\n/m1NgMYhOkIaiMEt2OnkdmxdzlSO/PV/Bx2Hue4KAQKBgQDvCNpncfMk8DACtwFC\nqnX1e6xOa1nVGFGjoh7whRZXrhMZcfTn9pE3SoCxKb4fxsYngoVlY4zwhyn10XqC\nhH1ydU+cl7HV4kp8rnjGLgtcc759G3NBU2HrfKHED/HLGTMwMukT/L772C6RpQtY\ncGfc9eEo8029Sb3eOwpQ0UKwQQKBgQDKV+RMcJCTANmBT+dth3C1DONfirZ+YudF\nvg3knz8iYzTvsq+zZ0xAKvNmleq2f2Q8eixcudF2gbIttTfKOFmgEvdSXzYzFKV+\naJZ67HIt0stfnOn0MEsmTEu5TbXt513vgKuotqpukNuKJtnMZhM48c0A6RcoRsDZ\n/zibMnQrOQKBgQCh/CHlkDbxhUND07iq8NFXNiQiUGVkH0LT3P2SiN4HNRQEXlFV\nEKaADaEAbgVFi3KlO7Iib0AHj9FDoF2hLR/F/PGicLo2807/B00ZIALa+CTSq1OD\npXnqF1+YeiWlOMKTmyyQOutBx9JnKK1zlVkNSCL5mUfJSru8ac4nzmefAQKBgQDH\nSvwkQbZT48FW+QFjQsRCvpfwUWpfX0CU05VReXuwfe/0qpUdaX+Tr/oeL0iHST/L\nxTWOesKRKzr4hAWYGhpEbInGStrSQuKhd5fHKL1o3rbKzH0tsqdB6GGo+J5Y3MoL\njDsGqCuDTQ++qXdZN6x1KMuWuv3BALcPv63cRjxfGQKBgEMTcTiq3uUNJtx6idK8\n4M+Qe53z1oz1tz2/a6YykH1Wh6uwYYiL2gqIlTYKUXcrCvUn7fQcumm2OPy/hXXP\nUN5qfcT1wiP1cPDKItsKfcu39Z8lVqUglW0MOIFDST30NYuDAk0ni+ldhi3wfD5V\nmS8QVY9xAlaeLLXsZuQIoOpL\n-----END PRIVATE KEY-----`
 )
@@ -602,6 +647,10 @@ func setUpMockHttpServer() *TestHttpMock {
 				w.Header().Set("Content-Type", "text/plain; charset=UTF-8")
 				w.WriteHeader(http.StatusOK)
 				w.Write([]byte("1.0.0"))
+			} else if r.URL.Path == "/timeout" {
+				w.WriteHeader(http.StatusOK)
+				time.Sleep(time.Duration(200) * time.Millisecond)
+				w.Write([]byte("1.0.0"))
 			} else if r.URL.Path == "/utf-16/meta_200.txt" {
 				w.Header().Set("Content-Type", "application/json; charset=UTF-16")
 				w.WriteHeader(http.StatusOK)
@@ -652,6 +701,75 @@ func setUpMockHttpServer() *TestHttpMock {
 	return &TestHttpMock{
 		server: Server,
 	}
+}
+
+const testDataSourceConfig_skip_verify_tls_fail = `
+data "http" "http_test" {
+  url = "%s/get"
+  ca = "%s"
+}
+
+output "body" {
+  value = "${data.http.http_test.body}"
+}
+`
+
+func TestDataSource_skip_tls_verify_fail(t *testing.T) {
+	testHttpMock := setUpMockTLSHttpServer()
+	defer testHttpMock.server.Close()
+	resource.UnitTest(t, resource.TestCase{
+		Providers: testProviders,
+		Steps: []resource.TestStep{
+			{
+				Config:      fmt.Sprintf(testDataSourceConfig_skip_verify_tls_fail, testHttpMock.server.URL, caCert),
+				ExpectError: regexp.MustCompile("x509: certificate signed by unknown authority"),
+			},
+		},
+	})
+}
+
+const testDataSourceConfig_skip_verify_tls_success = `
+data "http" "http_test" {
+  url = "%s/get"
+  ca = "%s"
+  insecure_skip_verify = true
+}
+
+output "body" {
+  value = "${data.http.http_test.body}"
+}
+`
+
+func TestDataSource_skip_tls_verify_success(t *testing.T) {
+	testHttpMock := setUpMockTLSHttpServer()
+
+	defer testHttpMock.server.Close()
+
+	resource.UnitTest(t, resource.TestCase{
+		Providers: testProviders,
+		Steps: []resource.TestStep{
+			{
+				Config: fmt.Sprintf(testDataSourceConfig_skip_verify_tls_success, testHttpMock.server.URL, caCert),
+				Check: func(s *terraform.State) error {
+					_, ok := s.RootModule().Resources["data.http.http_test"]
+					if !ok {
+						return fmt.Errorf("missing data resource")
+					}
+
+					outputs := s.RootModule().Outputs
+
+					if outputs["body"].Value != "1.0.0" {
+						return fmt.Errorf(
+							`'body' output is %s; want '1.0.0'`,
+							outputs["body"].Value,
+						)
+					}
+
+					return nil
+				},
+			},
+		},
+	})
 }
 
 func setUpMockTLSHttpServer() *TestHttpMock {
