@@ -185,6 +185,7 @@ func dataSourceRead(ctx context.Context, d *schema.ResourceData, meta interface{
 
 	tr := &http.Transport{
 		TLSClientConfig: tlsConfig,
+		Proxy:           http.ProxyFromEnvironment,
 	}
 	client := &http.Client{Transport: tr}
 
@@ -193,7 +194,7 @@ func dataSourceRead(ctx context.Context, d *schema.ResourceData, meta interface{
 	method_override, ok := d.GetOk("method")
 	if ok {
 		if verb, ok = method_override.(string); !ok {
-			return append(diags, diag.Errorf("Error overring verb")...)
+			return append(diags, diag.Errorf("Error overriding verb")...)
 		}
 	}
 
@@ -203,7 +204,7 @@ func dataSourceRead(ctx context.Context, d *schema.ResourceData, meta interface{
 		verb = http.MethodPost
 		if method_override != nil {
 			if verb, ok = method_override.(string); !ok {
-				return append(diags, diag.Errorf("Error overring verb")...)
+				return append(diags, diag.Errorf("Error overriding verb")...)
 			}
 		}
 		body = bytes.NewReader([]byte(b.(string)))
