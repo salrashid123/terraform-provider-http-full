@@ -537,7 +537,7 @@ x1mpmqYktTV/Y7QcHQsrVaZ+4WWYO0+Erp1mYrm7EUOhvGOGrp/6mw==
 	clientCert = `-----BEGIN CERTIFICATE-----\nMIIEDzCCAvegAwIBAgIBAzANBgkqhkiG9w0BAQsFADBQMQswCQYDVQQGEwJVUzEP\nMA0GA1UECgwGR29vZ2xlMRMwEQYDVQQLDApFbnRlcnByaXNlMRswGQYDVQQDDBJF\nbnRlcnByaXNlIFJvb3QgQ0EwHhcNMjIwNTI2MjMxNDE5WhcNMzIwNTI1MjMxNDE5\nWjBNMQswCQYDVQQHDAJVUzEPMA0GA1UECgwGR29vZ2xlMRMwEQYDVQQLDApFbnRl\ncnByaXNlMRgwFgYDVQQDDA91c2VyQGRvbWFpbi5jb20wggEiMA0GCSqGSIb3DQEB\nAQUAA4IBDwAwggEKAoIBAQC87w2DG1FqxHEidfPmhXsnqBNmgp3Rntyo7lJNtL2p\n1N49R88TiOKDNHsxAW4pT8E/cwWKB18SGMgpPEhC6vT7KOVzwUb/ozslfV3JiA4l\n8JU2jYkwXcgUCo1vZGlAcz3ciqfk+pQN1NFy6UuYNN45HNvoFcPgr+3mso+ODGXr\n1rkg/RCfGiMUK8qiyeGq0P7VkavFNsr09Mcx4cxrA7j9TOtTHQg2PReGKihCAlpE\nJHHtmrMRGUun/4i3E9tv53qyv85M9QXXbVN4kZrAH4jCljV8M1StPX+9e0C9A/J1\nvi9dtJ274+NL6dSOOvHv6FH+9bbHaTlmqM8MpyRa6Cl5AgMBAAGjgfYwgfMwDgYD\nVR0PAQH/BAQDAgeAMAkGA1UdEwQCMAAwEwYDVR0lBAwwCgYIKwYBBQUHAwIwHQYD\nVR0OBBYEFDg0Le8zwIgDv537avLRXuIQKTTZMB8GA1UdIwQYMBaAFLu0ZSVOswlp\n9yaZnAWoarmS0PhlMEUGCCsGAQUFBwEBBDkwNzA1BggrBgEFBQcwAoYpaHR0cDov\nL3BraS5lc29kZW1vYXBwMi5jb20vY2Evcm9vdC1jYS5jZXIwOgYDVR0fBDMwMTAv\noC2gK4YpaHR0cDovL3BraS5lc29kZW1vYXBwMi5jb20vY2Evcm9vdC1jYS5jcmww\nDQYJKoZIhvcNAQELBQADggEBADsc0BRMlI2wm4RcAOxK3GKrROAY9Lk/LglGqC63\nbGq0fVq+yu8H9fkQSSFVSaIaXtSYDl+fj7bOUkrJqzRy9hWHDoTTCUF+CNtiP7Lw\nE4jPSp2MllDh5S09/vQgd2k0ahejySSVgBU40klnwQovTWrA7sVG07eBxJph8IXc\nd2iqLbLLh3pnYUwE6VMDmspPVT8LsdNQuHoHsLVIb/zK+OkQM6NX/30Ri/XE41G1\n+h7c49t3eJ4YdYMnuXPS8QDuuRvFsunh00sejZtfvliJcFuCcRLPNw6hrbgIgtB9\nVeoUnh6o5hugfzXc/YqRLYW4zLgEoDnGUv+rf0D8CoYiwDQ=\n-----END CERTIFICATE-----`
 	clientKey  = `-----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQC87w2DG1FqxHEi\ndfPmhXsnqBNmgp3Rntyo7lJNtL2p1N49R88TiOKDNHsxAW4pT8E/cwWKB18SGMgp\nPEhC6vT7KOVzwUb/ozslfV3JiA4l8JU2jYkwXcgUCo1vZGlAcz3ciqfk+pQN1NFy\n6UuYNN45HNvoFcPgr+3mso+ODGXr1rkg/RCfGiMUK8qiyeGq0P7VkavFNsr09Mcx\n4cxrA7j9TOtTHQg2PReGKihCAlpEJHHtmrMRGUun/4i3E9tv53qyv85M9QXXbVN4\nkZrAH4jCljV8M1StPX+9e0C9A/J1vi9dtJ274+NL6dSOOvHv6FH+9bbHaTlmqM8M\npyRa6Cl5AgMBAAECggEAZFUCtPQl6XAGsIk5C9soyqd8Hf0ROEeH4QImnPN1oSHV\nH2/p7PLNb2XIYf7jdHbRJhO8Bk/h0edtLFDCAx9pF5PhPfaO8KTLfR41Vxe0g7te\nUgkZqKC05sev0k7dggdw+5R6kqPrSekRjVeM+Hhi5quHsJkWW1SyHsgGaiX1XibP\n5lR3xQKQRKkoHBGbxx2RxQ9grMg9vFzi8EGM63EPIyF4x7rV+pXVl+pHnCFTceV/\nz8a0ZoqCbGxMiUPVlwwIdT2ZRMZC6ChIbgfd+ZKsZU3dOaqVA+qaKbu63AJK1Qon\n/m1NgMYhOkIaiMEt2OnkdmxdzlSO/PV/Bx2Hue4KAQKBgQDvCNpncfMk8DACtwFC\nqnX1e6xOa1nVGFGjoh7whRZXrhMZcfTn9pE3SoCxKb4fxsYngoVlY4zwhyn10XqC\nhH1ydU+cl7HV4kp8rnjGLgtcc759G3NBU2HrfKHED/HLGTMwMukT/L772C6RpQtY\ncGfc9eEo8029Sb3eOwpQ0UKwQQKBgQDKV+RMcJCTANmBT+dth3C1DONfirZ+YudF\nvg3knz8iYzTvsq+zZ0xAKvNmleq2f2Q8eixcudF2gbIttTfKOFmgEvdSXzYzFKV+\naJZ67HIt0stfnOn0MEsmTEu5TbXt513vgKuotqpukNuKJtnMZhM48c0A6RcoRsDZ\n/zibMnQrOQKBgQCh/CHlkDbxhUND07iq8NFXNiQiUGVkH0LT3P2SiN4HNRQEXlFV\nEKaADaEAbgVFi3KlO7Iib0AHj9FDoF2hLR/F/PGicLo2807/B00ZIALa+CTSq1OD\npXnqF1+YeiWlOMKTmyyQOutBx9JnKK1zlVkNSCL5mUfJSru8ac4nzmefAQKBgQDH\nSvwkQbZT48FW+QFjQsRCvpfwUWpfX0CU05VReXuwfe/0qpUdaX+Tr/oeL0iHST/L\nxTWOesKRKzr4hAWYGhpEbInGStrSQuKhd5fHKL1o3rbKzH0tsqdB6GGo+J5Y3MoL\njDsGqCuDTQ++qXdZN6x1KMuWuv3BALcPv63cRjxfGQKBgEMTcTiq3uUNJtx6idK8\n4M+Qe53z1oz1tz2/a6YykH1Wh6uwYYiL2gqIlTYKUXcrCvUn7fQcumm2OPy/hXXP\nUN5qfcT1wiP1cPDKItsKfcu39Z8lVqUglW0MOIFDST30NYuDAk0ni+ldhi3wfD5V\nmS8QVY9xAlaeLLXsZuQIoOpL\n-----END PRIVATE KEY-----`
 )
-const testDataSourceConfig_tls = `
+const testDataSourceConfig_mtls = `
 data "http" "http_test" {
   url = "%s/get"
   ca = "%s"
@@ -605,7 +605,7 @@ func TestDataSource_mtls(t *testing.T) {
 		Providers: testProviders,
 		Steps: []resource.TestStep{
 			{
-				Config: fmt.Sprintf(testDataSourceConfig_tls, server.URL, caCert, clientCert, clientKey),
+				Config: fmt.Sprintf(testDataSourceConfig_mtls, server.URL, caCert, clientCert, clientKey),
 				Check: func(s *terraform.State) error {
 					_, ok := s.RootModule().Resources["data.http.http_test"]
 					if !ok {
@@ -788,14 +788,54 @@ output "body" {
 `
 
 func TestDataSource_sni_fail(t *testing.T) {
-	testHttpMock := setUpMockTLSHttpServer()
-	defer testHttpMock.server.Close()
+	server := httptest.NewUnstartedServer(
+		http.HandlerFunc(
+			func(w http.ResponseWriter, r *http.Request) {
+				w.Header().Set("Content-Type", "text/plain")
+				if r.URL.Path == "/get" {
+					w.WriteHeader(http.StatusOK)
+					w.Write([]byte("1.0.0"))
+				} else {
+					w.WriteHeader(http.StatusNotFound)
+				}
+			},
+		),
+	)
+
+	privBlock, _ := pem.Decode([]byte(localhostKey))
+	key, err := x509.ParsePKCS1PrivateKey(privBlock.Bytes)
+	if err != nil {
+		panic(fmt.Errorf("Error getting server private key : %v", err))
+	}
+
+	pubBlock, _ := pem.Decode([]byte(localhostCert))
+	cert, err := x509.ParseCertificate(pubBlock.Bytes)
+	if err != nil {
+		panic(fmt.Errorf("Error getting server public cert : %v", err))
+	}
+
+	tlsConfig := &tls.Config{
+		Certificates: []tls.Certificate{
+			{
+				PrivateKey:  key,
+				Certificate: [][]byte{cert.Raw},
+			},
+		},
+	}
+
+	tlsConfig.BuildNameToCertificate()
+
+	server.TLS = tlsConfig
+	server.StartTLS()
+
+	defer server.Close()
+
 	resource.UnitTest(t, resource.TestCase{
 		Providers: testProviders,
 		Steps: []resource.TestStep{
 			{
-				Config:      fmt.Sprintf(testDataSourceConfig_sni_fail, testHttpMock.server.URL, caCert),
-				ExpectError: regexp.MustCompile("x509: certificate is valid for example.com, not foo"),
+				Config:      fmt.Sprintf(testDataSourceConfig_sni_fail, server.URL, caCert),
+				ExpectError: regexp.MustCompile("x509: certificate is valid for localhost, not foo"),
 			},
 		},
 	})
@@ -806,7 +846,6 @@ data "http" "http_test" {
   url = "%s/get"
   ca = "%s"
   sni = "localhost"
-  insecure_skip_verify = true
 }
 
 output "body" {
@@ -815,15 +854,53 @@ output "body" {
 `
 
 func TestDataSource_sni_success(t *testing.T) {
-	testHttpMock := setUpMockTLSHttpServer()
+	server := httptest.NewUnstartedServer(
+		http.HandlerFunc(
+			func(w http.ResponseWriter, r *http.Request) {
+				w.Header().Set("Content-Type", "text/plain")
+				if r.URL.Path == "/get" {
+					w.WriteHeader(http.StatusOK)
+					w.Write([]byte("1.0.0"))
+				} else {
+					w.WriteHeader(http.StatusNotFound)
+				}
+			},
+		),
+	)
 
-	defer testHttpMock.server.Close()
+	privBlock, _ := pem.Decode([]byte(localhostKey))
+	key, err := x509.ParsePKCS1PrivateKey(privBlock.Bytes)
+	if err != nil {
+		panic(fmt.Errorf("Error getting server private key : %v", err))
+	}
+
+	pubBlock, _ := pem.Decode([]byte(localhostCert))
+	cert, err := x509.ParseCertificate(pubBlock.Bytes)
+	if err != nil {
+		panic(fmt.Errorf("Error getting server public cert : %v", err))
+	}
+
+	tlsConfig := &tls.Config{
+		Certificates: []tls.Certificate{
+			{
+				PrivateKey:  key,
+				Certificate: [][]byte{cert.Raw},
+			},
+		},
+	}
+
+	tlsConfig.BuildNameToCertificate()
+
+	server.TLS = tlsConfig
+	server.StartTLS()
+
+	defer server.Close()
 
 	resource.UnitTest(t, resource.TestCase{
 		Providers: testProviders,
 		Steps: []resource.TestStep{
 			{
-				Config: fmt.Sprintf(testDataSourceConfig_sni_success, testHttpMock.server.URL, caCert),
+				Config: fmt.Sprintf(testDataSourceConfig_sni_success, server.URL, caCert),
 				Check: func(s *terraform.State) error {
 					_, ok := s.RootModule().Resources["data.http.http_test"]
 					if !ok {
@@ -846,6 +923,10 @@ func TestDataSource_sni_success(t *testing.T) {
 	})
 }
 
+// the default httptest.NewTLSServer uses go's built in ca and certs..
+//  we're only using this for simple TLS testing.
+//  The tests that verify SNI uses the ca specified in this file and the tls server
+//  is started from scratch using httptest.NewUnstartedServer
 func setUpMockTLSHttpServer() *TestHttpMock {
 	Server := httptest.NewTLSServer(
 		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
