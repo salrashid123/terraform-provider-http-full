@@ -85,7 +85,13 @@ func dataSource() *schema.Resource {
 					Type: schema.TypeString,
 				},
 			},
-
+			"sni": {
+				Type:     schema.TypeString,
+				Optional: true,
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
+			},
 			"insecure_skip_verify": {
 				Type:     schema.TypeBool,
 				Optional: true,
@@ -158,6 +164,11 @@ func dataSourceRead(ctx context.Context, d *schema.ResourceData, meta interface{
 
 	tlsConfig := &tls.Config{
 		InsecureSkipVerify: skip_verify,
+	}
+
+	sni, ok := d.GetOk("sni")
+	if ok {
+		tlsConfig.ServerName = sni.(string)
 	}
 
 	castr, ok := d.GetOk("ca")

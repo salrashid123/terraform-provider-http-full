@@ -6,11 +6,9 @@ description: |-
 
 # `http` Data Source
 
-The `http` data source is a fork of `https://registry.terraform.io/providers/hashicorp/http/latest/docs/data-sources/http`
+The `http` data source is a fork of [terraform/http](https://registry.terraform.io/providers/hashicorp/http/latest/docs/data-sources/http)
 
-with additional support for JSON `POST|PUT|PATCH|DELETE` and `mTLS`
-
-Note, the `method` parameter defaults to `GET` but specifying it will allow overriding the verb.
+with additional support for arbitrary HTTP verbs (`POST|PUT|PATCH|DELETE`), `https_proxy` and `mTLS`
 
 ## Example Usage
 
@@ -108,13 +106,16 @@ output "data_json_mtls" {
 }
 ```
 
+### HTTPS_PROXY
+
+Export the environment variable `HTTPS_PROXY=` environment variable prior to invoking `terraform apply` with any configuration above.  For a sample proxy, see [salrashid123/squid_proxy](https://github.com/salrashid123/squid_proxy#forward).
+
 
 ## Argument Reference
 
 The following arguments are supported:
 
-* `url` - (Required) The URL to request data from. This URL must respond with
-  a `200 OK` response and a `text/*` or `application/json` Content-Type.
+* `url` - (Required) The URL to request data from. 
 
 * `method` - (Optional) String representing the HTTP verb to use in the call;
   (default=`GET`; if `request_body` is set, defaults to `POST`).
@@ -130,9 +131,11 @@ The following arguments are supported:
 
 * `ca` - (Optional) Certificate Authority in PEM format for the target server.
 
-* `client_crt` - (Optional) Client Certificate to present to the target server.
+* `sni` - (Optional) SNI for the server
 
-* `client_key` - (Optional) Client Certificate private Key to use for mTLS.
+* `client_crt` - (Optional) Client Certificate (PEM) to present to the target server.
+
+* `client_key` - (Optional) Client Certificate (PEM) private Key to use for mTLS.
 
 ## Attributes Reference
 

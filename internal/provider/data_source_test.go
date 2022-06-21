@@ -468,10 +468,13 @@ const (
 	// X509v3 extensions:
 	// X509v3 Extended Key Usage:
 	// 	TLS Web Server Authentication
+	// X509v3 Subject Key Identifier:
+	// 	5D:18:9B:10:D0:22:40:96:2B:A2:12:46:BC:C0:99:60:FA:18:F9:0A
 	// X509v3 Authority Key Identifier:
-	// 	keyid:B7:BA:B0:02:A1:E7:BE:34:C6:C1:05:5C:66:78:E5:BB:53:5D:A1:54
+	// 	keyid:BB:B4:65:25:4E:B3:09:69:F7:26:99:9C:05:A8:6A:B9:92:D0:F8:65
 	// X509v3 Subject Alternative Name:
-	// 	DNS:localhost
+	// 	IP Address:127.0.0.1, DNS:localhost
+
 	localhostCert = `-----BEGIN CERTIFICATE-----
 MIIELzCCAxegAwIBAgIBAjANBgkqhkiG9w0BAQsFADBQMQswCQYDVQQGEwJVUzEP
 MA0GA1UECgwGR29vZ2xlMRMwEQYDVQQLDApFbnRlcnByaXNlMRswGQYDVQQDDBJF
@@ -750,6 +753,77 @@ func TestDataSource_skip_tls_verify_success(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config: fmt.Sprintf(testDataSourceConfig_skip_verify_tls_success, testHttpMock.server.URL, caCert),
+				Check: func(s *terraform.State) error {
+					_, ok := s.RootModule().Resources["data.http.http_test"]
+					if !ok {
+						return fmt.Errorf("missing data resource")
+					}
+
+					outputs := s.RootModule().Outputs
+
+					if outputs["body"].Value != "1.0.0" {
+						return fmt.Errorf(
+							`'body' output is %s; want '1.0.0'`,
+							outputs["body"].Value,
+						)
+					}
+
+					return nil
+				},
+			},
+		},
+	})
+}
+
+const testDataSourceConfig_sni_fail = `
+data "http" "http_test" {
+  url = "%s/get"
+  ca = "%s"
+  sni = "foo"
+}
+
+output "body" {
+  value = "${data.http.http_test.body}"
+}
+`
+
+func TestDataSource_sni_fail(t *testing.T) {
+	testHttpMock := setUpMockTLSHttpServer()
+	defer testHttpMock.server.Close()
+	resource.UnitTest(t, resource.TestCase{
+		Providers: testProviders,
+		Steps: []resource.TestStep{
+			{
+				Config:      fmt.Sprintf(testDataSourceConfig_sni_fail, testHttpMock.server.URL, caCert),
+				ExpectError: regexp.MustCompile("x509: certificate is valid for example.com, not foo"),
+			},
+		},
+	})
+}
+
+const testDataSourceConfig_sni_success = `
+data "http" "http_test" {
+  url = "%s/get"
+  ca = "%s"
+  sni = "localhost"
+  insecure_skip_verify = true
+}
+
+output "body" {
+  value = "${data.http.http_test.body}"
+}
+`
+
+func TestDataSource_sni_success(t *testing.T) {
+	testHttpMock := setUpMockTLSHttpServer()
+
+	defer testHttpMock.server.Close()
+
+	resource.UnitTest(t, resource.TestCase{
+		Providers: testProviders,
+		Steps: []resource.TestStep{
+			{
+				Config: fmt.Sprintf(testDataSourceConfig_sni_success, testHttpMock.server.URL, caCert),
 				Check: func(s *terraform.State) error {
 					_, ok := s.RootModule().Resources["data.http.http_test"]
 					if !ok {
