@@ -32,6 +32,10 @@ output "body" {
   value = data.http.http_test.body
 }
 
+output "response_body" {
+  value = data.http.http_test.response_body
+}
+
 output "response_headers" {
   value = data.http.http_test.response_headers
 }
@@ -59,6 +63,13 @@ func TestDataSource_http200(t *testing.T) {
 						return fmt.Errorf(
 							`'body' output is %s; want '1.0.0'`,
 							outputs["body"].Value,
+						)
+					}
+
+					if outputs["response_body"].Value != "1.0.0" {
+						return fmt.Errorf(
+							`'response_body' output is %s; want '1.0.0'`,
+							outputs["response_body"].Value,
 						)
 					}
 
@@ -129,8 +140,8 @@ data "http" "http_test" {
   url = "%s/errorwithbody"
 }
 
-output "body" {
-  value = data.http.http_test.body
+output "response_body" {
+  value = data.http.http_test.response_body
 }
 
 output "response_headers" {
@@ -163,8 +174,8 @@ data "http" "http_test" {
   }
 }
 
-output "body" {
-  value = data.http.http_test.body
+output "response_body" {
+  value = data.http.http_test.response_body
 }
 `
 
@@ -186,10 +197,10 @@ func TestDataSource_withHeaders200(t *testing.T) {
 
 					outputs := s.RootModule().Outputs
 
-					if outputs["body"].Value != "1.0.0" {
+					if outputs["response_body"].Value != "1.0.0" {
 						return fmt.Errorf(
-							`'body' output is %s; want '1.0.0'`,
-							outputs["body"].Value,
+							`'response_body' output is %s; want '1.0.0'`,
+							outputs["response_body"].Value,
 						)
 					}
 
@@ -209,8 +220,8 @@ output "status_code" {
 	value = data.http.http_test.status_code
 }
 
-output "body" {
-  value = "${data.http.http_test.body}"
+output "response_body" {
+  value = "${data.http.http_test.response_body}"
 }
 `
 
@@ -247,10 +258,10 @@ func TestDataSource_utf8(t *testing.T) {
 						)
 					}
 
-					if outputs["body"].Value != "1.0.0" {
+					if outputs["response_body"].Value != "1.0.0" {
 						return fmt.Errorf(
-							`'body' output is %s; want '1.0.0'`,
-							outputs["body"].Value,
+							`'response_body' output is %s; want '1.0.0'`,
+							outputs["response_body"].Value,
 						)
 					}
 
@@ -266,8 +277,8 @@ data "http" "http_test" {
   url = "%s/utf-16/meta_%d.txt"
 }
 
-output "body" {
-  value = "${data.http.http_test.body}"
+output "response_body" {
+  value = "${data.http.http_test.response_body}"
 }
 `
 
@@ -301,8 +312,8 @@ data "http" "http_test" {
   })  
 }
 
-output "body" {
-  value = "${data.http.http_test.body}"
+output "response_body" {
+  value = "${data.http.http_test.response_body}"
 }
 `
 
@@ -335,8 +346,8 @@ data "http" "http_test" {
   })  
 }
 
-output "body" {
-  value = "${data.http.http_test.body}"
+output "response_body" {
+  value = "${data.http.http_test.response_body}"
 }
 `
 
@@ -361,10 +372,10 @@ func TestDataSource_post(t *testing.T) {
 
 					outputs := s.RootModule().Outputs
 
-					if outputs["body"].Value != "1.0.0" {
+					if outputs["response_body"].Value != "1.0.0" {
 						return fmt.Errorf(
-							`'body' output is %s; want '1.0.0'`,
-							outputs["body"].Value,
+							`'response_body' output is %s; want '1.0.0'`,
+							outputs["response_body"].Value,
 						)
 					}
 
@@ -386,8 +397,8 @@ data "http" "http_test" {
   request_body = "foo=bar&bar=bar"
 }
 
-output "body" {
-  value = "${data.http.http_test.body}"
+output "response_body" {
+  value = "${data.http.http_test.response_body}"
 }
 `
 
@@ -412,10 +423,10 @@ func TestDataSource_form_post(t *testing.T) {
 
 					outputs := s.RootModule().Outputs
 
-					if outputs["body"].Value != "1.0.0" {
+					if outputs["response_body"].Value != "1.0.0" {
 						return fmt.Errorf(
-							`'body' output is %s; want '1.0.0'`,
-							outputs["body"].Value,
+							`'response_body' output is %s; want '1.0.0'`,
+							outputs["response_body"].Value,
 						)
 					}
 
@@ -545,8 +556,8 @@ data "http" "http_test" {
   client_key = "%s" 
 }
 
-output "body" {
-  value = "${data.http.http_test.body}"
+output "response_body" {
+  value = "${data.http.http_test.response_body}"
 }
 `
 
@@ -614,10 +625,10 @@ func TestDataSource_mtls(t *testing.T) {
 
 					outputs := s.RootModule().Outputs
 
-					if outputs["body"].Value != "1.0.0" {
+					if outputs["response_body"].Value != "1.0.0" {
 						return fmt.Errorf(
-							`'body' output is %s; want '1.0.0'`,
-							outputs["body"].Value,
+							`'response_body' output is %s; want '1.0.0'`,
+							outputs["response_body"].Value,
 						)
 					}
 
@@ -712,8 +723,8 @@ data "http" "http_test" {
   ca = "%s"
 }
 
-output "body" {
-  value = "${data.http.http_test.body}"
+output "response_body" {
+  value = "${data.http.http_test.response_body}"
 }
 `
 
@@ -738,8 +749,8 @@ data "http" "http_test" {
   insecure_skip_verify = true
 }
 
-output "body" {
-  value = "${data.http.http_test.body}"
+output "response_body" {
+  value = "${data.http.http_test.response_body}"
 }
 `
 
@@ -761,10 +772,10 @@ func TestDataSource_skip_tls_verify_success(t *testing.T) {
 
 					outputs := s.RootModule().Outputs
 
-					if outputs["body"].Value != "1.0.0" {
+					if outputs["response_body"].Value != "1.0.0" {
 						return fmt.Errorf(
-							`'body' output is %s; want '1.0.0'`,
-							outputs["body"].Value,
+							`'response_body' output is %s; want '1.0.0'`,
+							outputs["response_body"].Value,
 						)
 					}
 
@@ -782,8 +793,8 @@ data "http" "http_test" {
   sni = "foo"
 }
 
-output "body" {
-  value = "${data.http.http_test.body}"
+output "response_body" {
+  value = "${data.http.http_test.response_body}"
 }
 `
 
@@ -848,8 +859,8 @@ data "http" "http_test" {
   sni = "localhost"
 }
 
-output "body" {
-  value = "${data.http.http_test.body}"
+output "response_body" {
+  value = "${data.http.http_test.response_body}"
 }
 `
 
@@ -909,10 +920,10 @@ func TestDataSource_sni_success(t *testing.T) {
 
 					outputs := s.RootModule().Outputs
 
-					if outputs["body"].Value != "1.0.0" {
+					if outputs["response_body"].Value != "1.0.0" {
 						return fmt.Errorf(
-							`'body' output is %s; want '1.0.0'`,
-							outputs["body"].Value,
+							`'response_body' output is %s; want '1.0.0'`,
+							outputs["response_body"].Value,
 						)
 					}
 
