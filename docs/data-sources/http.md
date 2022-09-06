@@ -143,7 +143,9 @@ The following attributes are exported:
 
 * `status_code` - The status_code of the HTTP response if not error
 
-* `body` - The raw body of the HTTP response.
+* `body` (String, Deprecated) The raw body of the HTTP response. **NOTE**: This is deprecated, use `response_body` instead.
+
+* `response_body` (String) The raw body of the HTTP response.
 
 * `response_headers` - A map of strings representing the response HTTP headers.
   Duplicate headers are concatenated with `, ` according to

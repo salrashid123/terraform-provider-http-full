@@ -79,8 +79,20 @@ func dataSource() *schema.Resource {
 			},
 
 			"body": {
-				Type:     schema.TypeString,
-				Computed: true,
+				Description: "The raw body of the HTTP response. " +
+					"**NOTE**: This is deprecated, use `response_body` instead.",
+				Type:       schema.TypeString,
+				Computed:   true,
+				Deprecated: "Use response_body instead",
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
+			},
+
+			"response_body": {
+				Description: "The raw body of the HTTP response.",
+				Type:        schema.TypeString,
+				Computed:    true,
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
 				},
@@ -280,6 +292,10 @@ func dataSourceRead(ctx context.Context, d *schema.ResourceData, meta interface{
 
 	if err = d.Set("status_code", resp.StatusCode); err != nil {
 		return append(diags, diag.Errorf("Error setting HTTP status_code: %s", err)...)
+	}
+
+	if err = d.Set("response_body", string(bytes)); err != nil {
+		return append(diags, diag.Errorf("Error setting HTTP response body: %s", err)...)
 	}
 
 	if err = d.Set("response_headers", responseHeaders); err != nil {
