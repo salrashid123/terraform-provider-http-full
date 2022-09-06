@@ -935,9 +935,10 @@ func TestDataSource_sni_success(t *testing.T) {
 }
 
 // the default httptest.NewTLSServer uses go's built in ca and certs..
-//  we're only using this for simple TLS testing.
-//  The tests that verify SNI uses the ca specified in this file and the tls server
-//  is started from scratch using httptest.NewUnstartedServer
+//
+//	we're only using this for simple TLS testing.
+//	The tests that verify SNI uses the ca specified in this file and the tls server
+//	is started from scratch using httptest.NewUnstartedServer
 func setUpMockTLSHttpServer() *TestHttpMock {
 	Server := httptest.NewTLSServer(
 		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

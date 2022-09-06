@@ -30,7 +30,7 @@ output "data_status_code" {
 }
 
 output "data_get" {
-  value = data.http.example_get.body
+  value = data.http.example_get.response_body
 }
 ```
 
@@ -55,7 +55,7 @@ data "http" "example_json" {
 }
 
 output "data_json" {
-  value = data.http.example_json.body
+  value = data.http.example_json.response_body
 }
 ```
 
@@ -102,7 +102,7 @@ data "http" "example_json_mtls" {
 }
 
 output "data_json_mtls" {
-  value = data.http.example_json_mtls.body
+  value = data.http.example_json_mtls.response_body
 }
 ```
 

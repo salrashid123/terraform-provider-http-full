@@ -39,6 +39,6 @@ data "http" "example" {
 }
 
 output "data" {
-  value = jsondecode(data.http.example.body)
+  value = jsondecode(data.http.example.response_body)
 }
 ```

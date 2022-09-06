@@ -31,7 +31,7 @@ data "http" "sts" {
 }
 
 output "sts_token" {
-  value = jsondecode(data.http.sts.body).access_token
+  value = jsondecode(data.http.sts.response_body).access_token
 }
 
 
@@ -48,7 +48,7 @@ data "http" "example_get" {
 }
 
 output "data_get" {
-  value = data.http.example_get.body
+  value = data.http.example_get.response_body
 }
 
 data "http" "example_json" {
@@ -72,7 +72,7 @@ data "http" "example_json" {
 }
 
 output "data_json" {
-  value = data.http.example_json.body
+  value = data.http.example_json.response_body
 }
 
 data "http" "example_form" {
@@ -92,5 +92,5 @@ data "http" "example_form" {
 }
 
 output "data_form" {
-  value = data.http.example_form.body
+  value = data.http.example_form.response_body
 }

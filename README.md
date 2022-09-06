@@ -59,7 +59,7 @@ data "http" "example" {
 }
 
 output "data" {
-  value = jsondecode(data.http.example.body)
+  value = jsondecode(data.http.example.response_body)
 }
 ```
 
@@ -102,7 +102,7 @@ data "http" "sts" {
 }
 
 output "sts_token" {
-  value = jsondecode(data.http.sts.body).access_token
+  value = jsondecode(data.http.sts.response_body).access_token
 }
 ```
 
@@ -194,7 +194,7 @@ data "http" "example" {
 }
 
 output "data" {
-  value = jsondecode(data.http.example.body)
+  value = jsondecode(data.http.example.response_body)
 }
 ```
 
