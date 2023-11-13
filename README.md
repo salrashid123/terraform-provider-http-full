@@ -85,7 +85,7 @@ You can also use this to interact with an [STS server](https://github.com/salras
 data "http" "sts" {
   provider = http-full
 
-  url = "https://stsserver-6w42z6vi3q-uc.a.run.app/token"
+  url = "https://stsserver-3kdezruzua-uc.a.run.app/token"
 
   method = "POST"
   request_headers = {
@@ -93,8 +93,8 @@ data "http" "sts" {
   }
   request_body = jsonencode({
     grant_type = "urn:ietf:params:oauth:grant-type:token-exchange",
-    resource = "grpcserver-6w42z6vi3q-uc.a.run.app",
-    audience = "grpcserver-6w42z6vi3q-uc.a.run.app",
+    resource = "grpcserver-3kdezruzua-uc.a.run.app",
+    audience = "grpcserver-3kdezruzua-uc.a.run.app",
     requested_token_type = "urn:ietf:params:oauth:token-type:access_token",
     subject_token = "iamtheeggman",
     subject_token_type = "urn:ietf:params:oauth:token-type:access_token"
